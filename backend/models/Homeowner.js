@@ -1,24 +1,31 @@
 import mongoose from 'mongoose'
 
-const homeownerSchema =new mongoose.Schema({
-   fullName:{
+const homeownerSchema = new mongoose.Schema({
+   user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+   },
+   fullName: {
       type: String,
       required: true,
    },
-   phone:{
-      type: String,
-      required:true,
-   },
-   address:{
+   phone: {
       type: String,
       required: true,
    },
-   age:{
+   address: {
       type: String,
-      required:true
+      required: true,
+   },
+   age: {
+      type: String,
+      required: true
    }
+}, {
+   timestamps: true
 })
 
-const Homeowner= mongoose.model("Homeowner",homeownerSchema)
+const Homeowner = mongoose.model("Homeowner", homeownerSchema)
 
 export default Homeowner

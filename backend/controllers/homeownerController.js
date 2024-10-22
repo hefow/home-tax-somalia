@@ -1,11 +1,17 @@
 import Homeowner from "../models/Homeowner.js";
 
 // create homeowner
-export const createHomeowner = async (req,res)=>{
-   const {fullName, phone, address, age}=req.body;
+export const createHomeowner = async (req, res) => {
+   const { fullName, phone, address, age } = req.body;
 
    try {
-      const newHomeowner = new Homeowner({ fullName, phone, address, age });
+      const newHomeowner = new Homeowner({
+         user: req.user._id, // Isticmaal ID-ga user-ka ee hadda ku jira
+         fullName,
+         phone,
+         address,
+         age
+      });
       await newHomeowner.save();
       res.status(201).json(newHomeowner);
    } catch (error) {
@@ -38,12 +44,25 @@ export const getHomeownerById = async (req, res) => {
 
 // Update a homeowner
 export const updateHomeowner = async (req, res) => {
+   const { fullName, phone, address, age } = req.body;
+
    try {
-      const homeowner = await Homeowner.findByIdAndUpdate(req.params.id, req.body, { new: true });
+      const homeowner = await Homeowner.findOne({ user: req.user._id });
+
       if (!homeowner) {
          return res.status(404).json({ message: 'Homeowner not found' });
       }
-      res.status(200).json(homeowner);
+
+      // Update the homeowner fields
+      homeowner.fullName = fullName || homeowner.fullName;
+      homeowner.phone = phone || homeowner.phone;
+      homeowner.address = address || homeowner.address;
+      homeowner.age = age || homeowner.age;
+
+      // Save the updated homeowner
+      const updatedHomeowner = await homeowner.save();
+
+      res.status(200).json(updatedHomeowner);
    } catch (error) {
       res.status(500).json({ message: error.message });
    }
@@ -52,7 +71,7 @@ export const updateHomeowner = async (req, res) => {
 // Delete a homeowner
 export const deleteHomeowner = async (req, res) => {
    try {
-      const homeowner = await Homeowner.findByIdAndDelete(req.params.id);
+      const homeowner = await Homeowner.findOneAndDelete({ user: req.user._id });
       if (!homeowner) {
          return res.status(404).json({ message: 'Homeowner not found' });
       }
