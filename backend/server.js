@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import connectDB from './config/database.js';
 import userRoutes from './routes/userRoutes.js';
 import bodyParser from 'body-parser';
+import homeownerRoutes from './routes/homeownerRoutes.js';
+
 
 dotenv.config();
 
@@ -20,6 +22,7 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api/users', userRoutes);
+app.use('/api/homeowners', homeownerRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
