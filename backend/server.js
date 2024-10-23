@@ -4,6 +4,7 @@ import connectDB from './config/database.js';
 import userRoutes from './routes/userRoutes.js';
 import homeownerRoutes from './routes/homeownerRoutes.js';
 import propertyRoutes from './routes/propertyRoutes.js';
+import taxRoutes from './routes/taxRoutes.js';
 import bodyParser from 'body-parser';
 
 
@@ -25,6 +26,7 @@ app.use((req, res, next) => {
 app.use('/api/users', userRoutes);
 app.use('/api/homeowners', homeownerRoutes);
 app.use('/api/properties', propertyRoutes);
+app.use('/api/taxes', taxRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -38,6 +40,7 @@ app.listen(PORT, () => {
   connectDB();
   console.log(`Server is running on port ${PORT}`);
 });
+
 
 
 
