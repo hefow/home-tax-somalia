@@ -15,12 +15,14 @@ export const registerUser = async (req, res) => {
   try {
     const { username, email, password, phone_number, role } = req.body;
 
+    // Check if the user already exists by email
     const userExists = await User.findOne({ email });
 
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
+    // Create a new user
     const user = await User.create({
       username,
       email,
@@ -31,7 +33,7 @@ export const registerUser = async (req, res) => {
 
     if (user) {
       res.status(201).json({
-        _id: user._id,
+        _id: user._id, // Use _id as the unique identifier
         username: user.username,
         email: user.email,
         role: user.role,

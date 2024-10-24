@@ -6,11 +6,17 @@ import homeownerRoutes from './routes/homeownerRoutes.js';
 import propertyRoutes from './routes/propertyRoutes.js';
 import taxRoutes from './routes/taxRoutes.js';
 import bodyParser from 'body-parser';
+import cors from 'cors'; // Add this line
 
 
 dotenv.config();
 
 const app = express();
+
+// CORS middleware
+app.use(cors({
+  origin: 'http://localhost:5173'
+}));// Add this line
 
 // This should be before any routes
 app.use(bodyParser.json());
