@@ -4,9 +4,10 @@ import { AuthProvider } from './contexts/AuthContext';
 import HomePage from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
-import Homeowner from './pages/Homeowner'; // Import the Homeowner component
+import Homeowner from './pages/Homeowner';
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
+import { PrivateRoute, PublicRoute } from './components/auth/ProtectedRoute';
 
 function App() {
   return (
@@ -17,10 +18,50 @@ function App() {
           <main className="flex-grow">
             <Routes>
               <Route path="/" element={<HomePage />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/homeowner" element={<Homeowner />} /> {/* Add the Homeowner route */}
-              {/* Add more routes as needed */}
+              
+              {/* Public routes - only for non-authenticated users */}
+              <Route 
+                path="/login" 
+                element={
+                  <PublicRoute>
+                    <Login />
+                  </PublicRoute>
+                } 
+              />
+              <Route 
+                path="/signup" 
+                element={
+                  <PublicRoute>
+                    <Signup />
+                  </PublicRoute>
+                } 
+              />
+              
+              {/* Private routes - only for authenticated users */}
+              <Route 
+                path="/homeowner" 
+                element={
+                  <PrivateRoute>
+                    <Homeowner />
+                  </PrivateRoute>
+                } 
+              />
+              <Route 
+                path="/taxes" 
+                element={
+                  <PrivateRoute>
+                    <Homeowner />
+                  </PrivateRoute>
+                } 
+              />
+              <Route 
+                path="/payments" 
+                element={
+                  <PrivateRoute>
+                    <Homeowner />
+                  </PrivateRoute>
+                } 
+              />
             </Routes>
           </main>
           <Footer />
