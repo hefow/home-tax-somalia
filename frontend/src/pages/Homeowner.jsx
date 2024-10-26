@@ -1,289 +1,197 @@
-import React, { useState, useEffect } from 'react';
-import { createHomeowner, createProperty, createTaxRecord, getProperties } from '../services/api';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { 
+  Home,
+  FileText, 
+  DollarSign,
+  Bell,
+  UserCircle,
+  BarChart2,
+  TrendingUp,
+  TrendingDown,
+  Minus
+} from 'lucide-react';
 
 function Homeowner() {
-  const [homeownerData, setHomeownerData] = useState({
-    fullName: '',
-    phone: '',
-    address: '',
-    age: '',
-  });
+  const stats = [
+    { id: 1, name: 'Total Properties', value: '3', change: '+1', changeType: 'increase' },
+    { id: 2, name: 'Pending Taxes', value: '$2,450', change: '2', changeType: 'decrease' },
+    { id: 3, name: 'Total Value', value: '$650,000', change: '+12.5%', changeType: 'increase' },
+    { id: 4, name: 'Tax Rate', value: '1.2%', change: '0%', changeType: 'neutral' },
+  ];
 
-  const [propertyData, setPropertyData] = useState({
-    address: '',
-    type: 'House',
-    size: '',
-    value: '',
-    yearBuilt: '',
-    description: '',
-  });
+  const quickActions = [
+    { name: 'Add Property', icon: Home, href: '/properties/new', color: 'bg-blue-500' },
+    { name: 'Pay Taxes', icon: DollarSign, href: '/payments', color: 'bg-green-500' },
+    { name: 'View Documents', icon: FileText, href: '/documents', color: 'bg-purple-500' },
+    { name: 'Tax History', icon: BarChart2, href: '/tax-history', color: 'bg-orange-500' },
+  ];
 
-  const [taxData, setTaxData] = useState({
-    propertyId: '',
-    year: '',
-    amount: '',
-    transactionDetails: '',
-  });
+  const recentActivities = [
+    { id: 1, activity: 'Tax payment processed', date: '2 hours ago', type: 'payment' },
+    { id: 2, activity: 'New property added', date: '1 day ago', type: 'property' },
+    { id: 3, activity: 'Document uploaded', date: '3 days ago', type: 'document' },
+  ];
 
-  const [properties, setProperties] = useState([]); // State to store properties
-  const [message, setMessage] = useState('');
-
-  useEffect(() => {
-    const fetchProperties = async () => {
-      try {
-        const response = await getProperties();
-        setProperties(response.data);
-      } catch (error) {
-        console.error('Failed to fetch properties:', error);
-      }
-    };
-
-    fetchProperties();
-  }, []);
-
-  const handleHomeownerSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await createHomeowner(homeownerData);
-      setMessage('Homeowner data saved successfully!');
-    } catch (error) {
-      setMessage('Failed to save homeowner data.');
-    }
-  };
-
-  const handlePropertySubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await createProperty(propertyData);
-      setMessage('Property data saved successfully!');
-    } catch (error) {
-      setMessage('Failed to save property data.');
-    }
-  };
-
-  const handleTaxSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await createTaxRecord(taxData);
-      setMessage('Tax record saved successfully!');
-    } catch (error) {
-      setMessage('Failed to save tax record.');
+  const getChangeIcon = (changeType) => {
+    switch (changeType) {
+      case 'increase':
+        return <TrendingUp className="h-4 w-4 text-green-500" />;
+      case 'decrease':
+        return <TrendingDown className="h-4 w-4 text-red-500" />;
+      default:
+        return <Minus className="h-4 w-4 text-gray-500" />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <h1 className="text-3xl font-bold mb-6">Homeowner Dashboard</h1>
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="min-h-screen bg-gray-50"
+    >
+      {/* Top Header */}
+      <motion.div 
+        initial={{ y: -20 }}
+        animate={{ y: 0 }}
+        className="bg-white shadow"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+            <div className="flex items-center space-x-4">
+              <motion.button 
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                className="p-2 rounded-full hover:bg-gray-100"
+              >
+                <Bell className="h-6 w-6 text-gray-500" />
+              </motion.button>
+              <motion.button 
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                className="p-2 rounded-full hover:bg-gray-100"
+              >
+                <UserCircle className="h-6 w-6 text-gray-500" />
+              </motion.button>
+            </div>
+          </div>
+        </div>
+      </motion.div>
 
-      <form onSubmit={handleHomeownerSubmit} className="bg-white p-6 rounded-lg shadow-md space-y-4 mb-8">
-        <h2 className="text-xl font-semibold mb-4">Homeowner Information</h2>
-        <div>
-          <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
-            Full Name
-          </label>
-          <input
-            type="text"
-            id="fullName"
-            className="input"
-            value={homeownerData.fullName}
-            onChange={(e) => setHomeownerData({ ...homeownerData, fullName: e.target.value })}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-            Phone
-          </label>
-          <input
-            type="tel"
-            id="phone"
-            className="input"
-            value={homeownerData.phone}
-            onChange={(e) => setHomeownerData({ ...homeownerData, phone: e.target.value })}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-            Address
-          </label>
-          <input
-            type="text"
-            id="address"
-            className="input"
-            value={homeownerData.address}
-            onChange={(e) => setHomeownerData({ ...homeownerData, address: e.target.value })}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="age" className="block text-sm font-medium text-gray-700">
-            Age
-          </label>
-          <input
-            type="number"
-            id="age"
-            className="input"
-            value={homeownerData.age}
-            onChange={(e) => setHomeownerData({ ...homeownerData, age: e.target.value })}
-            required
-          />
-        </div>
-        <button type="submit" className="btn btn-primary w-full">
-          Save Homeowner
-        </button>
-      </form>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Stats Grid */}
+        <motion.div 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          {stats.map((stat, index) => (
+            <motion.div 
+              key={stat.id}
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: index * 0.1 }}
+              whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+              className="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow"
+            >
+              <div className="px-4 py-5 sm:p-6">
+                <dt className="text-sm font-medium text-gray-500 truncate">{stat.name}</dt>
+                <dd className="mt-1 text-3xl font-semibold text-gray-900">{stat.value}</dd>
+                <dd className={`mt-2 text-sm flex items-center space-x-1 ${
+                  stat.changeType === 'increase' ? 'text-green-600' : 
+                  stat.changeType === 'decrease' ? 'text-red-600' : 
+                  'text-gray-600'
+                }`}>
+                  {getChangeIcon(stat.changeType)}
+                  <span>{stat.change}</span>
+                </dd>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
 
-      <form onSubmit={handlePropertySubmit} className="bg-white p-6 rounded-lg shadow-md space-y-4 mb-8">
-        <h2 className="text-xl font-semibold mb-4">Add Property</h2>
-        <div>
-          <label htmlFor="propertyAddress" className="block text-sm font-medium text-gray-700">
-            Address
-          </label>
-          <input
-            type="text"
-            id="propertyAddress"
-            className="input"
-            value={propertyData.address}
-            onChange={(e) => setPropertyData({ ...propertyData, address: e.target.value })}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="propertyType" className="block text-sm font-medium text-gray-700">
-            Type
-          </label>
-          <select
-            id="propertyType"
-            className="input"
-            value={propertyData.type}
-            onChange={(e) => setPropertyData({ ...propertyData, type: e.target.value })}
-          >
-            <option value="House">House</option>
-            <option value="Apartment">Apartment</option>
-            <option value="Commercial">Commercial</option>
-            <option value="Land">Land</option>
-          </select>
-        </div>
-        <div>
-          <label htmlFor="propertySize" className="block text-sm font-medium text-gray-700">
-            Size (sqft)
-          </label>
-          <input
-            type="number"
-            id="propertySize"
-            className="input"
-            value={propertyData.size}
-            onChange={(e) => setPropertyData({ ...propertyData, size: e.target.value })}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="propertyValue" className="block text-sm font-medium text-gray-700">
-            Value
-          </label>
-          <input
-            type="number"
-            id="propertyValue"
-            className="input"
-            value={propertyData.value}
-            onChange={(e) => setPropertyData({ ...propertyData, value: e.target.value })}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="yearBuilt" className="block text-sm font-medium text-gray-700">
-            Year Built
-          </label>
-          <input
-            type="number"
-            id="yearBuilt"
-            className="input"
-            value={propertyData.yearBuilt}
-            onChange={(e) => setPropertyData({ ...propertyData, yearBuilt: e.target.value })}
-          />
-        </div>
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-            Description
-          </label>
-          <textarea
-            id="description"
-            className="input"
-            value={propertyData.description}
-            onChange={(e) => setPropertyData({ ...propertyData, description: e.target.value })}
-          />
-        </div>
-        <button type="submit" className="btn btn-primary w-full">
-          Save Property
-        </button>
-      </form>
-
-      <form onSubmit={handleTaxSubmit} className="bg-white p-6 rounded-lg shadow-md space-y-4">
-        <h2 className="text-xl font-semibold mb-4">Add Tax Record</h2>
-        <div>
-          <label htmlFor="propertyId" className="block text-sm font-medium text-gray-700">
-            Property ID
-          </label>
-          <select
-            id="propertyId"
-            className="input"
-            value={taxData.propertyId}
-            onChange={(e) => setTaxData({ ...taxData, propertyId: e.target.value })}
-            required
-          >
-            <option value="">Select a property</option>
-            {properties.map((property) => (
-              <option key={property._id} value={property._id}>
-                {property.address}
-              </option>
+        {/* Quick Actions */}
+        <motion.div 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="mt-8"
+        >
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h2>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {quickActions.map((action, index) => (
+              <motion.div
+                key={action.name}
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.5 + index * 0.1 }}
+                whileHover={{ 
+                  scale: 1.05,
+                  transition: { duration: 0.2 }
+                }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Link
+                  to={action.href}
+                  className="relative rounded-lg p-6 bg-white shadow-sm hover:shadow-md transition-all duration-300 flex flex-col items-center"
+                >
+                  <motion.div 
+                    className={`${action.color} p-3 rounded-lg`}
+                    whileHover={{ rotate: 360 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <action.icon className="h-6 w-6 text-white" />
+                  </motion.div>
+                  <span className="mt-3 text-sm font-medium text-gray-900">{action.name}</span>
+                </Link>
+              </motion.div>
             ))}
-          </select>
-        </div>
-        <div>
-          <label htmlFor="taxYear" className="block text-sm font-medium text-gray-700">
-            Year
-          </label>
-          <input
-            type="number"
-            id="taxYear"
-            className="input"
-            value={taxData.year}
-            onChange={(e) => setTaxData({ ...taxData, year: e.target.value })}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="taxAmount" className="block text-sm font-medium text-gray-700">
-            Amount
-          </label>
-          <input
-            type="number"
-            id="taxAmount"
-            className="input"
-            value={taxData.amount}
-            onChange={(e) => setTaxData({ ...taxData, amount: e.target.value })}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="transactionDetails" className="block text-sm font-medium text-gray-700">
-            Transaction Details
-          </label>
-          <textarea
-            id="transactionDetails"
-            className="input"
-            value={taxData.transactionDetails}
-            onChange={(e) => setTaxData({ ...taxData, transactionDetails: e.target.value })}
-          />
-        </div>
-        <button type="submit" className="btn btn-primary w-full">
-          Save Tax Record
-        </button>
-      </form>
+          </div>
+        </motion.div>
 
-      {message && <p className="mt-4 text-center">{message}</p>}
-    </div>
+        {/* Recent Activity */}
+        <motion.div 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className="mt-8"
+        >
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Recent Activity</h2>
+          <motion.div 
+            className="bg-white shadow overflow-hidden sm:rounded-md"
+            whileHover={{ boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)" }}
+          >
+            <ul role="list" className="divide-y divide-gray-200">
+              {recentActivities.map((activity, index) => (
+                <motion.li 
+                  key={activity.id}
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.7 + index * 0.1 }}
+                  whileHover={{ backgroundColor: "#f9fafb" }}
+                >
+                  <div className="px-4 py-4 sm:px-6">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {activity.activity}
+                      </p>
+                      <div className="ml-2 flex-shrink-0 flex">
+                        <p className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                          {activity.date}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </motion.li>
+              ))}
+            </ul>
+          </motion.div>
+        </motion.div>
+      </main>
+    </motion.div>
   );
 }
 

@@ -1,45 +1,50 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import { getCurrentUser, login as apiLogin, logout as apiLogout } from '../services/api';
+import React, { createContext, useState, useContext } from 'react';
+import { login as apiLogin, logout as apiLogout } from '../services/api';
 
-export const AuthContext = createContext();
+const AuthContext = createContext(null);
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const user = getCurrentUser();
-    if (user) {
-      setUser(user);
-    }
-    setLoading(false);
-  }, []);
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem('user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
 
   const login = async (credentials) => {
-    const response = await apiLogin(credentials);
-    const user = response.data;
-    setUser(user);
-    localStorage.setItem('user', JSON.stringify(user));
-    return user;
+    try {
+      const response = await apiLogin(credentials);
+      const userData = response.data;
+      setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
+      return userData;
+    } catch (error) {
+      console.error('Login error in context:', error);
+      throw error;
+    }
   };
 
   const logout = () => {
     apiLogout();
     setUser(null);
+    localStorage.removeItem('user');
   };
 
   const value = {
     user,
     login,
-    logout,
-    loading
+    logout
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };
