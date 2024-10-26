@@ -30,7 +30,10 @@ function Header() {
                 <Home className="h-5 w-5" />
                 <span>Dashboard</span>
               </Link>
-              <button onClick={handleLogout} className="hover:text-gray-200 flex items-center space-x-1">
+              <button 
+                onClick={handleLogout} 
+                className="hover:text-gray-200 flex items-center space-x-1"
+              >
                 <LogOut className="h-5 w-5" />
                 <span>Logout</span>
               </button>
