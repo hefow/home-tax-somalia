@@ -20,9 +20,20 @@ const propertySchema = new mongoose.Schema({
     required: true,
     enum: ['House', 'Apartment', 'Commercial', 'Land']
   },
+  // Update size fields
   size: {
-    type: Number,
-    required: true
+    square: {
+      type: Number,
+      required: true
+    },
+    feet: {
+      type: Number,
+      required: true
+    },
+    total: {
+      type: Number,
+      required: true
+    }
   },
   value: {
     type: Number,

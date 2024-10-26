@@ -1,12 +1,11 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import HomePage from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Homeowner from './pages/Homeowner';
-import Header from './components/common/Header';
 import Footer from './components/common/Footer';
 import { PrivateRoute, PublicRoute } from './components/auth/ProtectedRoute';
 
@@ -33,12 +32,10 @@ function App() {
               duration: 3000,
             }}
           />
-          <Header />
           <main className="flex-grow">
             <Routes>
+              {/* Public routes */}
               <Route path="/" element={<HomePage />} />
-              
-              {/* Public routes - only for non-authenticated users */}
               <Route 
                 path="/login" 
                 element={
@@ -56,7 +53,7 @@ function App() {
                 } 
               />
               
-              {/* Private routes - only for authenticated users */}
+              {/* Private routes */}
               <Route 
                 path="/homeowner" 
                 element={
@@ -65,22 +62,9 @@ function App() {
                   </PrivateRoute>
                 } 
               />
-              <Route 
-                path="/taxes" 
-                element={
-                  <PrivateRoute>
-                    <Homeowner />
-                  </PrivateRoute>
-                } 
-              />
-              <Route 
-                path="/payments" 
-                element={
-                  <PrivateRoute>
-                    <Homeowner />
-                  </PrivateRoute>
-                } 
-              />
+
+              {/* Redirect all other routes to homeowner */}
+              <Route path="*" element={<Navigate to="/homeowner" replace />} />
             </Routes>
           </main>
           <Footer />

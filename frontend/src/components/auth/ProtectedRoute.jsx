@@ -1,28 +1,23 @@
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import PropTypes from 'prop-types';
 
 // Route for authenticated users only
 export function PrivateRoute({ children }) {
   const { user } = useAuth();
-  const location = useLocation();
-  
-  if (!user) {
-    // Redirect to login but save the attempted location
-    return <Navigate to="/login" state={{ from: location }} />;
-  }
-  
-  return children;
+  return user ? children : <Navigate to="/login" />;
 }
 
 // Route for non-authenticated users only
 export function PublicRoute({ children }) {
   const { user } = useAuth();
-  const location = useLocation();
-  
-  if (user) {
-    // Redirect to the page they came from or homeowner dashboard
-    return <Navigate to={location.state?.from?.pathname || "/homeowner"} />;
-  }
-  
-  return children;
+  return user ? <Navigate to="/homeowner" /> : children;
 }
+
+PrivateRoute.propTypes = {
+  children: PropTypes.node.isRequired,
+};
+
+PublicRoute.propTypes = {
+  children: PropTypes.node.isRequired,
+};

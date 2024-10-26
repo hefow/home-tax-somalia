@@ -5,8 +5,14 @@ export const createHomeowner = async (req, res) => {
    const { fullName, phone, address, age } = req.body;
 
    try {
+      // Check if homeowner already exists
+      const existingHomeowner = await Homeowner.findOne({ user: req.user._id });
+      if (existingHomeowner) {
+         return res.status(400).json({ message: 'Homeowner profile already exists' });
+      }
+
       const newHomeowner = new Homeowner({
-         user: req.user._id, // Use the ID of the currently logged-in user
+         user: req.user._id,
          fullName,
          phone,
          address,
@@ -22,8 +28,11 @@ export const createHomeowner = async (req, res) => {
 //get all homeowners
 export const getHomeowners = async (req, res) => {
    try {
-      const homeowners = await Homeowner.find();
-      res.status(200).json(homeowners);
+      const homeowner = await Homeowner.findOne({ user: req.user._id });
+      if (!homeowner) {
+         return res.status(404).json({ message: 'Homeowner not found' });
+      }
+      res.status(200).json(homeowner);
    } catch (error) {
       res.status(500).json({ message: error.message });
    }
