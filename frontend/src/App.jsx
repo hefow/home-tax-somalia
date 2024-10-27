@@ -1,35 +1,93 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
+import { AuthProvider } from './contexts/AuthContext';
+import HomePage from './pages/Home';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import Homeowner from './pages/Homeowner';
+import Header from './components/common/Header';
+import Footer from './components/common/Footer';
+import { PrivateRoute, PublicRoute } from './components/auth/ProtectedRoute';
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <AuthProvider>
+      <Router>
+        <div className="flex flex-col min-h-screen">
+          <Toaster 
+            position="top-right"
+            toastOptions={{
+              success: {
+                style: {
+                  background: 'green',
+                  color: 'white',
+                },
+              },
+              error: {
+                style: {
+                  background: 'red',
+                  color: 'white',
+                },
+              },
+              duration: 3000,
+            }}
+          />
+          <Header />
+          <main className="flex-grow">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              
+              {/* Public routes - only for non-authenticated users */}
+              <Route 
+                path="/login" 
+                element={
+                  <PublicRoute>
+                    <Login />
+                  </PublicRoute>
+                } 
+              />
+              <Route 
+                path="/signup" 
+                element={
+                  <PublicRoute>
+                    <Signup />
+                  </PublicRoute>
+                } 
+              />
+              
+              {/* Private routes - only for authenticated users */}
+              <Route 
+                path="/homeowner" 
+                element={
+                  <PrivateRoute>
+                    <Homeowner />
+                  </PrivateRoute>
+                } 
+              />
+              <Route 
+                path="/taxes" 
+                element={
+                  <PrivateRoute>
+                    <Homeowner />
+                  </PrivateRoute>
+                } 
+              />
+              <Route 
+                path="/payments" 
+                element={
+                  <PrivateRoute>
+                    <Homeowner />
+                  </PrivateRoute>
+                } 
+              />
+            </Routes>
+          </main>
+          <Footer />
+        </div>
+      </Router>
+    </AuthProvider>
+  );
 }
 
-export default App
+export default App;

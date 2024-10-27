@@ -6,7 +6,7 @@ export const createHomeowner = async (req, res) => {
 
    try {
       const newHomeowner = new Homeowner({
-         user: req.user._id, // Isticmaal ID-ga user-ka ee hadda ku jira
+         user: req.user._id, // Use the ID of the currently logged-in user
          fullName,
          phone,
          address,
