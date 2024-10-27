@@ -1,6 +1,5 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import HomePage from './pages/Home';
 import Login from './pages/Login';
@@ -15,24 +14,6 @@ function App() {
     <AuthProvider>
       <Router>
         <div className="flex flex-col min-h-screen">
-          <Toaster 
-            position="top-right"
-            toastOptions={{
-              success: {
-                style: {
-                  background: 'green',
-                  color: 'white',
-                },
-              },
-              error: {
-                style: {
-                  background: 'red',
-                  color: 'white',
-                },
-              },
-              duration: 3000,
-            }}
-          />
           <Header />
           <main className="flex-grow">
             <Routes>
