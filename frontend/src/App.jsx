@@ -8,6 +8,7 @@ import Signup from './pages/Signup';
 import Homeowner from './pages/Homeowner';
 import Footer from './components/common/Footer';
 import { PrivateRoute, PublicRoute } from './components/auth/ProtectedRoute';
+import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
   return (
@@ -35,7 +36,7 @@ function App() {
           <main className="flex-grow">
             <Routes>
               {/* Public routes */}
-              <Route path="/" element={<HomePage />} />
+              <Route path="/" element={<Homeowner />} />
               <Route 
                 path="/login" 
                 element={
@@ -59,6 +60,14 @@ function App() {
                 element={
                   <PrivateRoute>
                     <Homeowner />
+                  </PrivateRoute>
+                } 
+              />
+              <Route 
+                path="/admin" 
+                element={
+                  <PrivateRoute>
+                    <AdminDashboard />
                   </PrivateRoute>
                 } 
               />

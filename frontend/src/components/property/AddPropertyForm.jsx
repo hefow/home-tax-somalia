@@ -211,10 +211,7 @@ export function AddPropertyForm({ onClose, onSubmit }) {
                 <div className="flex-shrink-0 text-gray-400">
                   <Info className="h-4 w-4" />
                 </div>
-                <p className="text-xs text-gray-500">
-                  A good description helps potential tenants or buyers understand your property better.
-                  Include key features, recent upgrades, and any unique characteristics.
-                </p>
+                
               </div>
             </div>
 

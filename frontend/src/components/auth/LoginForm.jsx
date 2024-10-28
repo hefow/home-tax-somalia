@@ -65,6 +65,10 @@ function LoginForm({ onSubmit, isLoading, formData, setFormData }) {
           >
             {isLoading ? 'Signing in...' : 'Sign in'}
           </motion.button>
+          <div className="text-center text-sm text-gray-600">
+          i didn't have an acount'?{' '}
+          <a href="/signup" className="text-blue-600 hover:underline">signup</a>
+        </div>
         </div>
       </form>
     </motion.div>
