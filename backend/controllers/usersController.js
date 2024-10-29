@@ -13,12 +13,22 @@ const generateToken = (id) => {
 // @access  Public
 export const registerUser = async (req, res) => {
   try {
-    const { username, email, password, phone_number, role } = req.body;
+    const { username, email, password, phone_number } = req.body;
 
     // Check if user already exists
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findOne({ 
+      $or: [
+        { email },
+        { username }
+      ] 
+    });
+
     if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ 
+        message: userExists.email === email 
+          ? 'Email already registered' 
+          : 'Username already taken' 
+      });
     }
 
     // Create new user
@@ -26,8 +36,7 @@ export const registerUser = async (req, res) => {
       username,
       email,
       password,
-      phone_number,
-      role
+      phone_number
     });
 
     if (user) {
@@ -39,40 +48,45 @@ export const registerUser = async (req, res) => {
         role: user.role,
         token: generateToken(user._id)
       });
-    } else {
-      res.status(400).json({ message: 'Invalid user data' });
     }
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ 
-      message: 'Server error', 
+      message: 'Server error during registration', 
       error: error.message 
     });
   }
 };
 
-// @desc    Auth user & get token
+// @desc    Login user
 // @route   POST /api/users/login
 // @access  Public
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Find user by email
     const user = await User.findOne({ email });
 
+    // Check if user exists and password matches
     if (user && (await user.matchPassword(password))) {
       res.json({
         _id: user._id,
         username: user.username,
         email: user.email,
+        phone_number: user.phone_number,
         role: user.role,
-        token: generateToken(user._id),
+        token: generateToken(user._id)
       });
     } else {
       res.status(401).json({ message: 'Invalid email or password' });
     }
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Login error:', error);
+    res.status(500).json({ 
+      message: 'Server error during login',
+      error: error.message 
+    });
   }
 };
 
@@ -81,11 +95,11 @@ export const loginUser = async (req, res) => {
 // @access  Private
 export const getUserProfile = async (req, res) => {
   try {
-    console.log('User ID:', req.user._id); // Add this line
+    console.log('User ID:', req.user._id);
     const user = await User.findById(req.user._id);
 
     if (user) {
-      console.log('User found:', user); // Add this line
+      console.log('User found:', user);
       res.json({
         _id: user._id,
         username: user.username,
@@ -94,11 +108,11 @@ export const getUserProfile = async (req, res) => {
         role: user.role,
       });
     } else {
-      console.log('User not found'); // Add this line
+      console.log('User not found');
       res.status(404).json({ message: 'User not found' });
     }
   } catch (error) {
-    console.error('Error in getUserProfile:', error); // Add this line
+    console.error('Error in getUserProfile:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

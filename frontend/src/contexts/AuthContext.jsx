@@ -19,15 +19,27 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (userData) => {
-    // Store both token and user data
-    localStorage.setItem('token', userData.token);
-    localStorage.setItem('userData', JSON.stringify({
-      _id: userData._id,
-      name: userData.name,
-      email: userData.email,
-      role: userData.role,
-    }));
-    setUser(userData);
+    try {
+      if (!userData.token) {
+        throw new Error('No token received from server');
+      }
+      
+      // Store token
+      localStorage.setItem('token', userData.token);
+      
+      // Store user data
+      localStorage.setItem('userData', JSON.stringify({
+        _id: userData._id,
+        username: userData.username,
+        email: userData.email,
+        role: userData.role,
+      }));
+      
+      setUser(userData);
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
   };
 
   const logout = () => {

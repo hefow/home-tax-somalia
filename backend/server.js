@@ -5,6 +5,7 @@ import userRoutes from './routes/userRoutes.js';
 import homeownerRoutes from './routes/homeownerRoutes.js';
 import propertyRoutes from './routes/propertyRoutes.js';
 import taxRoutes from './routes/taxRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 import cors from 'cors';
 
 dotenv.config();
@@ -26,6 +27,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/homeowners', homeownerRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/taxes', taxRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

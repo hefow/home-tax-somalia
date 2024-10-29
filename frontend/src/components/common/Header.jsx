@@ -26,7 +26,7 @@ function Header() {
           </Link>
           {user ? (
             <>
-              <Link to="/homeowner" className="hover:text-gray-200 flex items-center space-x-1">
+              <Link to="/dashboard" className="hover:text-gray-200 flex items-center space-x-1">
                 <Home className="h-5 w-5" />
                 <span>Dashboard</span>
               </Link>
