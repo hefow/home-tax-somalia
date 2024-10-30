@@ -51,7 +51,7 @@ function HomePage() {
               className="hidden md:block"
             >
               <img 
-                src="/images/hero-image.png" 
+                src="src/assets/Tax.png" 
                 alt="Property Management" 
                 className="w-full h-auto rounded-lg shadow-xl"
               />

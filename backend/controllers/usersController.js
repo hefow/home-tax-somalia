@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 // Generate JWT
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
+    expiresIn: '1d',
   });
 };
 
@@ -40,13 +40,16 @@ export const registerUser = async (req, res) => {
     });
 
     if (user) {
+      // Generate token immediately after user creation
+      const token = generateToken(user._id);
+      
       res.status(201).json({
         _id: user._id,
         username: user.username,
         email: user.email,
         phone_number: user.phone_number,
         role: user.role,
-        token: generateToken(user._id)
+        token // Include token in response
       });
     }
   } catch (error) {
@@ -124,28 +127,32 @@ export const updateUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
 
-    if (user) {
-      user.username = req.body.username || user.username;
-      user.email = req.body.email || user.email;
-      user.phone_number = req.body.phone_number || user.phone_number;
-
-      if (req.body.password) {
-        user.password = req.body.password;
-      }
-
-      const updatedUser = await user.save();
-
-      res.json({
-        _id: updatedUser._id,
-        username: updatedUser.username,
-        email: updatedUser.email,
-        phone_number: updatedUser.phone_number,
-        role: updatedUser.role,
-        token: generateToken(updatedUser._id),
-      });
-    } else {
-      res.status(404).json({ message: 'User not found' });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
+
+    // Update basic info
+    if (req.body.username) user.username = req.body.username;
+    if (req.body.email) user.email = req.body.email;
+
+    // Handle password change
+    if (req.body.newPassword) {
+      const isMatch = await user.matchPassword(req.body.currentPassword);
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Current password is incorrect' });
+      }
+      user.password = req.body.newPassword;
+    }
+
+    const updatedUser = await user.save();
+
+    res.json({
+      _id: updatedUser._id,
+      username: updatedUser.username,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      token: generateToken(updatedUser._id)
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -159,6 +166,28 @@ export const logoutUser = async (req, res) => {
     // In a real-world scenario, you might want to invalidate the token on the server-side
     // For now, we'll just send a success response
     res.json({ message: 'Logged out successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Add this new controller function
+export const verifyPassword = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    const { currentPassword } = req.body;
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const isMatch = await user.matchPassword(currentPassword);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+
+    res.json({ message: 'Password verified' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

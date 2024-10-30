@@ -9,35 +9,6 @@ import Homeowner from './pages/Homeowner';
 import Footer from './components/common/Footer';
 import { PrivateRoute, PublicRoute } from './components/auth/ProtectedRoute.jsx';
 import AdminDashboard from './pages/AdminDashboard';
-import { useAuth } from './contexts/AuthContext';
-
-// Create a new component for the dashboard route
-function DashboardRoute() {
-  const { user } = useAuth();
-  
-  // Redirect based on user role
-  if (user?.role === 'admin') {
-    return <Navigate to="/admin" replace />;
-  }
-  
-  return <Homeowner />;
-}
-
-// Create a new component for the root route
-function RootRoute() {
-  const { user } = useAuth();
-  
-  if (user) {
-    // Redirect based on user role
-    if (user.role === 'admin') {
-      return <Navigate to="/admin" replace />;
-    }
-    return <Navigate to="/dashboard" replace />;
-  }
-  
-  // If user is not logged in, show home page
-  return <HomePage />;
-}
 
 function App() {
   return (
@@ -64,10 +35,8 @@ function App() {
           />
           <main className="flex-grow">
             <Routes>
-              {/* Root route with conditional rendering */}
-              <Route path="/" element={<RootRoute />} />
-              
               {/* Public routes */}
+              <Route path="/" element={<HomePage />} />
               <Route 
                 path="/login" 
                 element={
@@ -87,10 +56,10 @@ function App() {
               
               {/* Private routes */}
               <Route 
-                path="/dashboard" 
+                path="/homeowner" 
                 element={
                   <PrivateRoute>
-                    <DashboardRoute />
+                    <Homeowner />
                   </PrivateRoute>
                 } 
               />

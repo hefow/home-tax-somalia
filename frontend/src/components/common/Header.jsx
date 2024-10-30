@@ -12,6 +12,11 @@ function Header() {
     navigate('/');
   };
 
+  const getDashboardLink = () => {
+    if (!user) return '/';
+    return user.role === 'admin' ? '/admin' : '/homeowner';
+  };
+
   return (
     <header className="bg-gradient-to-r from-blue-500 to-teal-400 text-white p-4 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
@@ -26,7 +31,10 @@ function Header() {
           </Link>
           {user ? (
             <>
-              <Link to="/dashboard" className="hover:text-gray-200 flex items-center space-x-1">
+              <Link 
+                to={getDashboardLink()} 
+                className="hover:text-gray-200 flex items-center space-x-1"
+              >
                 <Home className="h-5 w-5" />
                 <span>Dashboard</span>
               </Link>

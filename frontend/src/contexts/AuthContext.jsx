@@ -20,25 +20,36 @@ export function AuthProvider({ children }) {
 
   const login = async (userData) => {
     try {
+      // Check if we received user data
+      if (!userData || typeof userData !== 'object') {
+        throw new Error('Invalid user data received');
+      }
+
+      // Check for token specifically
       if (!userData.token) {
-        throw new Error('No token received from server');
+        console.error('Response data:', userData);
+        throw new Error('Authentication token not received from server');
       }
       
       // Store token
       localStorage.setItem('token', userData.token);
       
-      // Store user data
-      localStorage.setItem('userData', JSON.stringify({
+      // Store user data without sensitive information
+      const userDataToStore = {
         _id: userData._id,
         username: userData.username,
         email: userData.email,
         role: userData.role,
-      }));
+        phone_number: userData.phone_number
+      };
       
-      setUser(userData);
+      localStorage.setItem('userData', JSON.stringify(userDataToStore));
+      setUser(userDataToStore);
+      
+      return userDataToStore; // Return the user data for additional handling if needed
     } catch (error) {
       console.error('Login error:', error);
-      throw error;
+      throw new Error(error.message || 'Failed to process login');
     }
   };
 
@@ -54,9 +65,14 @@ export function AuthProvider({ children }) {
   };
 
   const updateUserData = (newData) => {
-    const updatedUser = { ...user, ...newData };
-    localStorage.setItem('userData', JSON.stringify(updatedUser));
-    setUser(updatedUser);
+    try {
+      const updatedUser = { ...user, ...newData };
+      localStorage.setItem('userData', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+    } catch (error) {
+      console.error('Error updating user data:', error);
+      throw error;
+    }
   };
 
   const value = {
