@@ -104,6 +104,23 @@ function SignupForm({ onSubmit }) {
           </p>
         </div>
 
+        {/* Role Field */}
+        <div>
+          <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+            Role
+          </label>
+          <select
+            id="role"
+            className="input"
+            value={formData.role}
+            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+            required
+          >
+            <option value="homeowner">Homeowner</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+
         {/* Terms and Communication Checkboxes */}
         <div className="space-y-4">
           <div className="flex items-start">
