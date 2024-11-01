@@ -1,14 +1,26 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import HomePage from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Homeowner from './pages/Homeowner';
 import Footer from './components/common/Footer';
-import { PrivateRoute, PublicRoute } from './components/auth/ProtectedRoute.jsx';
+import { PrivateRoute, PublicRoute } from './components/auth/ProtectedRoute';
 import AdminDashboard from './pages/AdminDashboard';
+import PropTypes from 'prop-types';
+
+// Route guard component for admin routes
+function AdminRoute({ children }) {
+  const { user } = useAuth();
+  
+  if (!user || user.role !== 'admin') {
+    return <Navigate to="/homeowner" replace />;
+  }
+  
+  return children;
+}
 
 function App() {
   return (
@@ -54,26 +66,35 @@ function App() {
                 } 
               />
               
-              {/* Private routes */}
+              {/* Protected homeowner routes */}
               <Route 
-                path="/homeowner" 
+                path="/homeowner/*" 
                 element={
                   <PrivateRoute>
                     <Homeowner />
                   </PrivateRoute>
                 } 
               />
+
+              {/* Protected admin routes */}
               <Route 
-                path="/admin" 
+                path="/admin/*" 
                 element={
                   <PrivateRoute adminOnly>
-                    <AdminDashboard />
+                    <AdminRoute>
+                      <AdminDashboard />
+                    </AdminRoute>
                   </PrivateRoute>
                 } 
               />
 
-              {/* Redirect all other routes */}
-              <Route path="*" element={<Navigate to="/" replace />} />
+              {/* Catch-all redirect */}
+              <Route 
+                path="*" 
+                element={
+                  <Navigate to="/" replace />
+                } 
+              />
             </Routes>
           </main>
           <Footer />
@@ -82,5 +103,9 @@ function App() {
     </AuthProvider>
   );
 }
+
+AdminRoute.propTypes = {
+  children: PropTypes.node.isRequired,
+};
 
 export default App;
