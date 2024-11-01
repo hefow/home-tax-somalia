@@ -13,7 +13,7 @@ const generateToken = (id) => {
 // @access  Public
 export const registerUser = async (req, res) => {
   try {
-    const { username, email, password, phone_number } = req.body;
+    const { username, email, password, phone_number, adminKey } = req.body;
 
     // Check if user already exists
     const userExists = await User.findOne({ 
@@ -31,16 +31,19 @@ export const registerUser = async (req, res) => {
       });
     }
 
+    // Check if adminKey matches for admin registration
+    const role = adminKey === process.env.ADMIN_KEY ? 'admin' : 'homeowner';
+
     // Create new user
     const user = await User.create({
       username,
       email,
       password,
-      phone_number
+      phone_number,
+      role
     });
 
     if (user) {
-      // Generate token immediately after user creation
       const token = generateToken(user._id);
       
       res.status(201).json({
@@ -49,7 +52,7 @@ export const registerUser = async (req, res) => {
         email: user.email,
         phone_number: user.phone_number,
         role: user.role,
-        token // Include token in response
+        token
       });
     }
   } catch (error) {

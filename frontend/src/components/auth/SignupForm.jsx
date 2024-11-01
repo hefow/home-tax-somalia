@@ -6,12 +6,14 @@ function SignupForm({ onSubmit }) {
     email: '',
     phone_number: '',
     password: '',
+    adminKey: '',
     role: 'homeowner'
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [agreeToCommunication, setAgreeToCommunication] = useState(false);
+  const [showAdminKey, setShowAdminKey] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -113,13 +115,33 @@ function SignupForm({ onSubmit }) {
             id="role"
             className="input"
             value={formData.role}
-            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-            required
+            onChange={(e) => {
+              setFormData({ ...formData, role: e.target.value });
+              setShowAdminKey(e.target.value === 'admin');
+            }}
           >
             <option value="homeowner">Homeowner</option>
             <option value="admin">Admin</option>
           </select>
         </div>
+
+        {/* Admin Key Field - Only shown when admin role is selected */}
+        {showAdminKey && (
+          <div>
+            <label htmlFor="adminKey" className="block text-sm font-medium text-gray-700">
+              Admin Key
+            </label>
+            <input
+              type="password"
+              id="adminKey"
+              className="input"
+              value={formData.adminKey}
+              onChange={(e) => setFormData({ ...formData, adminKey: e.target.value })}
+              placeholder="Enter admin key"
+              required={showAdminKey}
+            />
+          </div>
+        )}
 
         {/* Terms and Communication Checkboxes */}
         <div className="space-y-4">

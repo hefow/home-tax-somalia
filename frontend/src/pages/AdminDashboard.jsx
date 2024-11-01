@@ -1,8 +1,8 @@
 // AdminDashboard.js
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Home, Trash2, RefreshCw } from 'lucide-react';
-import Sidebar from '../components/common/SideBar';
+import { Users, Home, Trash2, RefreshCw, Settings } from 'lucide-react';
+import { Sidebar } from '../components/common/Sidebar';
 import Header from '../components/common/Header';
 import toast from 'react-hot-toast';
 
@@ -115,94 +115,42 @@ function AdminDashboard() {
     fetchDashboardData();
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen">
-        <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
-        </div>
-      </div>
-    );
-  }
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'overview':
+        return (
+          <div className="space-y-6">
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                className="bg-blue-500 text-white rounded-lg p-6"
+              >
+                <Users className="h-8 w-8 mb-2" />
+                <h3 className="text-lg font-semibold">Total Users</h3>
+                <p className="text-2xl font-bold">{stats?.totalUsers || 0}</p>
+              </motion.div>
 
-  return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <div className="flex-1">
-        <Header />
-        
-        <main className="p-6">
-          {/* Stats Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              className="bg-blue-500 text-white rounded-lg p-6"
-            >
-              <Users className="h-8 w-8 mb-2" />
-              <h3 className="text-lg font-semibold">Total Users</h3>
-              <p className="text-2xl font-bold">{stats?.totalUsers || 0}</p>
-            </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                className="bg-green-500 text-white rounded-lg p-6"
+              >
+                <Home className="h-8 w-8 mb-2" />
+                <h3 className="text-lg font-semibold">Total Properties</h3>
+                <p className="text-2xl font-bold">{stats?.totalProperties || 0}</p>
+              </motion.div>
 
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              className="bg-green-500 text-white rounded-lg p-6"
-            >
-              <Home className="h-8 w-8 mb-2" />
-              <h3 className="text-lg font-semibold">Total Properties</h3>
-              <p className="text-2xl font-bold">{stats?.totalProperties || 0}</p>
-            </motion.div>
-
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              className="bg-purple-500 text-white rounded-lg p-6"
-            >
-              <Users className="h-8 w-8 mb-2" />
-              <h3 className="text-lg font-semibold">Total Homeowners</h3>
-              <p className="text-2xl font-bold">{stats?.totalHomeowners || 0}</p>
-            </motion.div>
-          </div>
-
-          {/* Tabs */}
-          <div className="mb-6">
-            <div className="border-b border-gray-200">
-              <nav className="-mb-px flex space-x-8">
-                <button
-                  onClick={() => setActiveTab('overview')}
-                  className={`${
-                    activeTab === 'overview'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium`}
-                >
-                  Overview
-                </button>
-                <button
-                  onClick={() => setActiveTab('users')}
-                  className={`${
-                    activeTab === 'users'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium`}
-                >
-                  Users
-                </button>
-                <button
-                  onClick={() => setActiveTab('properties')}
-                  className={`${
-                    activeTab === 'properties'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium`}
-                >
-                  Properties
-                </button>
-              </nav>
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                className="bg-purple-500 text-white rounded-lg p-6"
+              >
+                <Users className="h-8 w-8 mb-2" />
+                <h3 className="text-lg font-semibold">Total Homeowners</h3>
+                <p className="text-2xl font-bold">{stats?.totalHomeowners || 0}</p>
+              </motion.div>
             </div>
-          </div>
 
-          {/* Content based on active tab */}
-          {activeTab === 'overview' && (
+            {/* Recent Users and Properties tables */}
             <div className="space-y-6">
               {/* Recent Users */}
               <div className="bg-white rounded-lg shadow p-6">
@@ -286,7 +234,200 @@ function AdminDashboard() {
                 </div>
               </div>
             </div>
-          )}
+          </div>
+        );
+
+      case 'users':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">User Management</h2>
+                <button className="btn btn-primary">
+                  <Users className="h-5 w-5 mr-2" />
+                  Add New User
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead>
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Username
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Email
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Role
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {users.map((user) => (
+                      <tr key={user._id}>
+                        <td className="px-6 py-4 whitespace-nowrap">{user.username}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'
+                          }`}>
+                            {user.role}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <button
+                            onClick={() => handleDeleteUser(user._id)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'properties':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Property Management</h2>
+                <button className="btn btn-primary">
+                  <Home className="h-5 w-5 mr-2" />
+                  Add New Property
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead>
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Address
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Owner
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Type
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Value
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {properties.map((property) => (
+                      <tr key={property._id}>
+                        <td className="px-6 py-4 whitespace-nowrap">{property.address}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {property.owner?.username}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">{property.type}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          ${property.value?.toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <button
+                            onClick={() => handleDeleteProperty(property._id)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'settings':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-semibold mb-4">Admin Settings</h2>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <h3 className="font-medium">Email Notifications</h3>
+                    <p className="text-sm text-gray-500">Receive email notifications for new registrations</p>
+                  </div>
+                  <label className="switch">
+                    <input type="checkbox" />
+                    <span className="slider round"></span>
+                  </label>
+                </div>
+                {/* Add more settings as needed */}
+              </div>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen">
+        <Sidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-screen">
+      <Sidebar />
+      <div className="flex-1">
+        <Header />
+        
+        <main className="p-6">
+          {/* Tabs */}
+          <div className="mb-6">
+            <div className="border-b border-gray-200">
+              <nav className="-mb-px flex space-x-8">
+                {[
+                  { name: 'Overview', value: 'overview' },
+                  { name: 'Users', value: 'users' },
+                  { name: 'Properties', value: 'properties' },
+                  { name: 'Settings', value: 'settings' }
+                ].map((tab) => (
+                  <button
+                    key={tab.value}
+                    onClick={() => setActiveTab(tab.value)}
+                    className={`${
+                      activeTab === tab.value
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium`}
+                  >
+                    {tab.name}
+                  </button>
+                ))}
+              </nav>
+            </div>
+          </div>
+
+          {/* Content */}
+          {renderContent()}
         </main>
       </div>
     </div>

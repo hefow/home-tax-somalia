@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 import SignupForm from '../components/auth/SignupForm';
 import toast from 'react-hot-toast';
 
 function Signup() {
-  const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSignup = async (formData) => {
     setIsLoading(true);
@@ -23,27 +21,27 @@ function Signup() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to register');
+        throw new Error(data.message || 'Registration failed');
       }
 
-      // Ensure we have a token before proceeding
-      if (!data.token) {
-        throw new Error('No authentication token received');
-      }
-
-      await login(data);
       toast.success('Registration successful!');
-      navigate('/homeowner');
+      
+      // Navigate based on role
+      if (data.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/homeowner');
+      }
+      
     } catch (error) {
-      console.error('Signup error:', error);
-      toast.error(error.message || 'Failed to register');
+      toast.error(error.message);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <SignupForm onSubmit={handleSignup} isLoading={isLoading} />
     </div>
   );
