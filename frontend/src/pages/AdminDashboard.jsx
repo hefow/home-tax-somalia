@@ -12,6 +12,11 @@ function AdminDashboard() {
   const [properties, setProperties] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [showForm,setShowForm]=useState(false)
+
+  const handleAddProperty=()=>{
+    setShowForm(true);
+  }
 
   const fetchDashboardData = async () => {
     try {
@@ -246,6 +251,7 @@ function AdminDashboard() {
                 <button className="btn btn-primary">
                   <Users className="h-5 w-5 mr-2" />
                   Add New User
+
                 </button>
               </div>
               <div className="overflow-x-auto">
@@ -301,7 +307,7 @@ function AdminDashboard() {
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Property Management</h2>
-                <button className="btn btn-primary">
+                <button className="btn btn-primary" onClick={handleAddProperty}>
                   <Home className="h-5 w-5 mr-2" />
                   Add New Property
                 </button>
