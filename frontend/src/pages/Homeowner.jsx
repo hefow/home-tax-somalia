@@ -170,7 +170,7 @@ function Homeowner() {
       onClick: () => setShowAddProperty(true), 
       color: 'bg-blue-500' 
     },
-    { name: 'Pay Taxes', icon: DollarSign, href: '/payments', color: 'bg-green-500' },
+    { name: 'Pay Taxes', icon: DollarSign, href: '/pricing', color: 'bg-green-500' },
     { name: 'View Documents', icon: FileText, href: '/documents', color: 'bg-purple-500' },
     { name: 'Tax History', icon: BarChart2, href: '/tax-history', color: 'bg-orange-500' },
   ];

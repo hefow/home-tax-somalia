@@ -9,6 +9,8 @@ import Homeowner from './pages/Homeowner';
 import Footer from './components/common/Footer';
 import { PrivateRoute, PublicRoute } from './components/auth/ProtectedRoute';
 import AdminDashboard from './pages/AdminDashboard';
+import Pricing from './pages/Pricing';
+import Header from './components/common/Header';
 import PropTypes from 'prop-types';
 
 // Route guard component for admin routes
@@ -27,6 +29,7 @@ function App() {
     <AuthProvider>
       <Router>
         <div className="flex flex-col min-h-screen">
+          {/* <Header /> */}
           <Toaster 
             position="top-right"
             toastOptions={{
@@ -49,6 +52,7 @@ function App() {
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<HomePage />} />
+              <Route path="/pricing" element={<Pricing />} />
               <Route 
                 path="/login" 
                 element={

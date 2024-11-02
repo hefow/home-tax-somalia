@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Phone, MapPin, Calendar, X } from 'lucide-react';
 import PropTypes from 'prop-types';
+import toast from 'react-hot-toast';
 
 function HomeownerForm({ onSubmit, onClose, isLoading }) {
   const [formData, setFormData] = useState({
@@ -11,9 +12,86 @@ function HomeownerForm({ onSubmit, onClose, isLoading }) {
     age: '',
   });
 
-  const handleSubmit = (e) => {
+  const [errors, setErrors] = useState({});
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Authentication required. Please login again.');
+        return;
+      }
+
+      const response = await fetch('http://localhost:5000/api/homeowners', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.errors) {
+          setErrors(data.errors);
+          Object.values(data.errors).forEach(error => {
+            toast.error(error);
+          });
+        } else {
+          toast.error(data.message || 'Something went wrong');
+          console.error('Server Error:', data);
+        }
+        return;
+      }
+
+      toast.success(data.message || 'Profile operation successful');
+      onSubmit(data.homeowner);
+      onClose();
+
+    } catch (error) {
+      console.error('Request Error:', error);
+      if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+        toast.error('Unable to connect to server. Please check your internet connection.');
+      } else {
+        toast.error('Failed to process profile. Please try again.');
+      }
+    }
+  };
+
+  // Input change handler with validation feedback
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+
+    // Clear error for this field when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: ''
+      }));
+    }
+  };
+
+  // Helper function to show field requirements
+  const getHelperText = (field) => {
+    switch (field) {
+      case 'fullName':
+        return 'Enter your first and last name (letters only)';
+      case 'phone':
+        return 'Format: +252XXXXXXXXX or 252XXXXXXXXX';
+      case 'address':
+        return 'Enter street number and name (e.g., 123 Main St)';
+      case 'age':
+        return 'Must be 18 or older';
+      default:
+        return '';
+    }
   };
 
   return (
@@ -69,11 +147,17 @@ function HomeownerForm({ onSubmit, onClose, isLoading }) {
                     type="text"
                     required
                     value={formData.fullName}
-                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    onChange={(e) => handleInputChange('fullName', e.target.value)}
+                    className={`pl-10 w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 
+                      ${errors.fullName ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="John Doe"
                   />
                 </div>
+                {/* Helper text */}
+                <p className="mt-1 text-xs text-gray-500">{getHelperText('fullName')}</p>
+                {errors.fullName && (
+                  <p className="mt-1 text-xs text-red-500">{errors.fullName}</p>
+                )}
               </div>
 
               {/* Phone */}
@@ -89,11 +173,16 @@ function HomeownerForm({ onSubmit, onClose, isLoading }) {
                     type="tel"
                     required
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="+1 (555) 000-0000"
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    className={`pl-10 w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
+                      ${errors.phone ? 'border-red-500' : 'border-gray-300'}`}
+                    placeholder="+252615551234"
                   />
                 </div>
+                <p className="mt-1 text-xs text-gray-500">{getHelperText('phone')}</p>
+                {errors.phone && (
+                  <p className="mt-1 text-xs text-red-500">{errors.phone}</p>
+                )}
               </div>
 
               {/* Address */}
@@ -109,11 +198,16 @@ function HomeownerForm({ onSubmit, onClose, isLoading }) {
                     type="text"
                     required
                     value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="123 Main St, City, Country"
+                    onChange={(e) => handleInputChange('address', e.target.value)}
+                    className={`pl-10 w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
+                      ${errors.address ? 'border-red-500' : 'border-gray-300'}`}
+                    placeholder="123 Main St, Mogadishu"
                   />
                 </div>
+                <p className="mt-1 text-xs text-gray-500">{getHelperText('address')}</p>
+                {errors.address && (
+                  <p className="mt-1 text-xs text-red-500">{errors.address}</p>
+                )}
               </div>
 
               {/* Age */}
@@ -131,11 +225,16 @@ function HomeownerForm({ onSubmit, onClose, isLoading }) {
                     min="18"
                     max="120"
                     value={formData.age}
-                    onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                    className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    onChange={(e) => handleInputChange('age', e.target.value)}
+                    className={`pl-10 w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
+                      ${errors.age ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="25"
                   />
                 </div>
+                <p className="mt-1 text-xs text-gray-500">{getHelperText('age')}</p>
+                {errors.age && (
+                  <p className="mt-1 text-xs text-red-500">{errors.age}</p>
+                )}
               </div>
 
               {/* Actions */}

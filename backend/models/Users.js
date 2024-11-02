@@ -25,6 +25,17 @@ const userSchema = new mongoose.Schema({
     enum: ['admin', 'homeowner'],
     default: 'homeowner',
   },
+  subscription: {
+    planId: String,
+    planName: String,
+    status: {
+      type: String,
+      enum: ['active', 'inactive', 'failed'],
+      default: 'inactive'
+    },
+    startDate: Date,
+    endDate: Date
+  }
 }, {
   timestamps: true,
 });

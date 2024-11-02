@@ -1,27 +1,48 @@
 import Homeowner from "../models/Homeowner.js";
+import { validateHomeownerForm } from '../utils/validationHelpers.js';
 
 // create homeowner
 export const createHomeowner = async (req, res) => {
-   const { fullName, phone, address, age } = req.body;
-
    try {
       // Check if homeowner already exists
       const existingHomeowner = await Homeowner.findOne({ user: req.user._id });
+      
       if (existingHomeowner) {
-         return res.status(400).json({ message: 'Homeowner profile already exists' });
+         // Instead of error, return the existing homeowner
+         return res.status(200).json({ 
+           message: 'Retrieved existing profile',
+           homeowner: existingHomeowner 
+         });
       }
+
+      // Validate the form data
+      const { isValid, errors, validatedData } = validateHomeownerForm(req.body);
+
+      if (!isValid) {
+         return res.status(400).json({ 
+           message: 'Validation failed', 
+           errors 
+         });
+      }
+
+      
 
       const newHomeowner = new Homeowner({
          user: req.user._id,
-         fullName,
-         phone,
-         address,
-         age
+         ...validatedData
       });
+      
       await newHomeowner.save();
-      res.status(201).json(newHomeowner);
+      res.status(201).json({
+        message: 'Profile created successfully',
+        homeowner: newHomeowner
+      });
    } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Create Homeowner Error:', error);
+      res.status(500).json({ 
+        message: 'Error creating profile',
+        error: error.message 
+      });
    }
 };
 
@@ -53,24 +74,27 @@ export const getHomeownerById = async (req, res) => {
 
 // Update a homeowner
 export const updateHomeowner = async (req, res) => {
-   const { fullName, phone, address, age } = req.body;
-
    try {
+      // Validate the form data
+      const { isValid, errors, validatedData } = validateHomeownerForm(req.body);
+
+      if (!isValid) {
+         return res.status(400).json({ 
+           message: 'Validation failed', 
+           errors 
+         });
+      }
+
       const homeowner = await Homeowner.findOne({ user: req.user._id });
 
       if (!homeowner) {
          return res.status(404).json({ message: 'Homeowner not found' });
       }
 
-      // Update the homeowner fields
-      homeowner.fullName = fullName || homeowner.fullName;
-      homeowner.phone = phone || homeowner.phone;
-      homeowner.address = address || homeowner.address;
-      homeowner.age = age || homeowner.age;
+      // Update with validated data
+      Object.assign(homeowner, validatedData);
 
-      // Save the updated homeowner
       const updatedHomeowner = await homeowner.save();
-
       res.status(200).json(updatedHomeowner);
    } catch (error) {
       res.status(500).json({ message: error.message });
