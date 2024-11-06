@@ -1,11 +1,40 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import PropTypes from 'prop-types';
+import { login } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 
-function LoginForm({ onSubmit, isLoading, formData, setFormData }) {
-  const handleSubmit = (e) => {
+function LoginForm({ onSuccess }) {
+  const [credentials, setCredentials] = useState({
+    email: '',
+    password: ''
+  });
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const { login: authLogin } = useAuth();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(formData); // Pass formData directly to onSubmit
+    setError('');
+    try {
+      setIsLoading(true);
+      const response = await login(credentials);
+      
+      await authLogin(response.data);
+      if (onSuccess) {
+        onSuccess(response.data);
+      }
+      
+      navigate('/homeowner', { replace: true });
+    } catch (error) {
+      console.error('Login failed:', error);
+      setError(error.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -15,6 +44,12 @@ function LoginForm({ onSubmit, isLoading, formData, setFormData }) {
       className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10"
     >
       <form className="space-y-6" onSubmit={handleSubmit}>
+        {error && (
+          <div className="bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <span className="block sm:inline">{error}</span>
+          </div>
+        )}
+        
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700">
             Email address
@@ -26,8 +61,8 @@ function LoginForm({ onSubmit, isLoading, formData, setFormData }) {
               type="email"
               autoComplete="email"
               required
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              value={credentials.email}
+              onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
               className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               placeholder="Enter your email"
             />
@@ -45,8 +80,8 @@ function LoginForm({ onSubmit, isLoading, formData, setFormData }) {
               type="password"
               autoComplete="current-password"
               required
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              value={credentials.password}
+              onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
               className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               placeholder="Enter your password"
             />
@@ -65,10 +100,12 @@ function LoginForm({ onSubmit, isLoading, formData, setFormData }) {
           >
             {isLoading ? 'Signing in...' : 'Sign in'}
           </motion.button>
-          <div className="text-center text-sm text-gray-600">
-          i didn't have an acount'?{' '}
-          <a href="/signup" className="text-blue-600 hover:underline">signup</a>
-        </div>
+          <div className="text-center text-sm text-gray-600 mt-4">
+            Don't have an account?{' '}
+            <a href="/signup" className="text-blue-600 hover:underline">
+              Sign up
+            </a>
+          </div>
         </div>
       </form>
     </motion.div>
@@ -76,13 +113,7 @@ function LoginForm({ onSubmit, isLoading, formData, setFormData }) {
 }
 
 LoginForm.propTypes = {
-  onSubmit: PropTypes.func.isRequired,
-  isLoading: PropTypes.bool.isRequired,
-  formData: PropTypes.shape({
-    email: PropTypes.string.isRequired,
-    password: PropTypes.string.isRequired,
-  }).isRequired,
-  setFormData: PropTypes.func.isRequired,
+  onSuccess: PropTypes.func.isRequired,
 };
 
 export default LoginForm;

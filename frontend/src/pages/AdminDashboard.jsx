@@ -1,12 +1,16 @@
 // AdminDashboard.js
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Home, Trash2, RefreshCw, Settings } from 'lucide-react';
+import { Users, Home, Trash2, RefreshCw, Settings, LogOut } from 'lucide-react';
 import { Sidebar } from '../components/common/Sidebar';
 import Header from '../components/common/Header';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 function AdminDashboard() {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [properties, setProperties] = useState([]);
@@ -15,11 +19,13 @@ function AdminDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const token = localStorage.getItem('token');
-      console.log('Sending token:', token); // Debug log
+      const token = user?.token || localStorage.getItem('token');
+      console.log('Current user:', user);
+      console.log('Using token:', token);
 
       if (!token) {
         toast.error('Authentication token not found');
+        logout();
         return;
       }
 
@@ -31,6 +37,11 @@ function AdminDashboard() {
       });
       
       if (!response.ok) {
+        if (response.status === 401) {
+          toast.error('Session expired. Please login again.');
+          logout();
+          return;
+        }
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to fetch dashboard data');
       }
@@ -46,6 +57,16 @@ function AdminDashboard() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!user || user.role !== 'admin') {
+      toast.error('Unauthorized access');
+      navigate('/login');
+      return;
+    }
+
+    fetchDashboardData();
+  }, [user, navigate]);
 
   const handleDeleteUser = async (userId) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
@@ -110,10 +131,6 @@ function AdminDashboard() {
       toast.error(error.message);
     }
   };
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -382,10 +399,30 @@ function AdminDashboard() {
     }
   };
 
+  const handleLogout = () => {
+    try {
+      logout();
+      toast.success('Logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to logout');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen">
-        <Sidebar />
+        <Sidebar>
+          <div className="mt-auto p-4">
+            <button
+              onClick={handleLogout}
+              className="flex items-center space-x-2 text-gray-600 hover:text-red-500 transition-colors"
+            >
+              <LogOut className="h-5 w-5" />
+              <span>Logout</span>
+            </button>
+          </div>
+        </Sidebar>
         <div className="flex-1 flex items-center justify-center">
           <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
         </div>
@@ -395,7 +432,17 @@ function AdminDashboard() {
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar />
+      <Sidebar>
+        <div className="mt-auto p-4">
+          <button
+            onClick={handleLogout}
+            className="flex items-center space-x-2 text-gray-600 hover:text-red-500 transition-colors"
+          >
+            <LogOut className="h-5 w-5" />
+            <span>Logout</span>
+          </button>
+        </div>
+      </Sidebar>
       <div className="flex-1">
         <Header />
         

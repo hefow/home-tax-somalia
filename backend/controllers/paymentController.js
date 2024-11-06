@@ -6,57 +6,42 @@ dotenv.config();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-export const createPaymentIntent = async (req, res) => {
+export const createCheckoutSession = async (req, res) => {
   try {
-    console.log('Received payment request:', req.body);
     const { amount, planId, planName } = req.body;
-
-    if (!amount || !planId || !planName) {
-      console.log('Missing required fields:', { amount, planId, planName });
-      return res.status(400).json({ 
-        message: 'Missing required payment information',
-        received: { amount, planId, planName }
-      });
-    }
-
-    const numericAmount = Number(amount);
-    if (isNaN(numericAmount)) {
-      return res.status(400).json({ 
-        message: 'Invalid amount format',
-        received: amount
-      });
-    }
-
-    const amountInCents = Math.round(numericAmount * 100);
-
-    console.log('Creating payment intent with amount:', amountInCents);
-
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountInCents,
-      currency: 'usd',
+    
+    // Create Stripe Checkout Session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: planName,
+              description: `Subscription for ${planName} plan`,
+            },
+            unit_amount: amount * 100, // Convert to cents
+          },
+          quantity: 1,
+        },
+      ],
       metadata: {
         planId,
         planName,
         userId: req.user._id.toString()
       },
-      automatic_payment_methods: {
-        enabled: true,
-      },
+      mode: 'payment',
+      success_url: `${process.env.FRONTEND_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URL}/pricing`,
     });
 
-    console.log('Payment intent created:', paymentIntent.id);
-
-    res.json({
-      clientSecret: paymentIntent.client_secret,
-      amount: amountInCents,
-    });
+    res.json({ sessionId: session.id, url: session.url });
   } catch (error) {
-    console.error('Payment Intent Error:', error);
+    console.error('Checkout Session Error:', error);
     res.status(500).json({ 
-      error: 'Failed to create payment intent',
-      details: error.message,
-      type: error.type,
-      code: error.code
+      error: 'Failed to create checkout session',
+      details: error.message 
     });
   }
 };
