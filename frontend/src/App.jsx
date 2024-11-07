@@ -86,6 +86,7 @@ function App() {
                     </AdminRoute>
                   </PrivateRoute>
                 } 
+              
               />
 
               {/* Catch-all redirect */}
