@@ -106,7 +106,6 @@ function Header() {
   `;
 
   return (
-<<<<<<< HEAD
     <header className="bg-gradient-to-r from-blue-500 to-teal-400 text-white shadow-lg">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
@@ -203,52 +202,6 @@ function Header() {
         </AnimatePresence>
       </div>
     </header>
-=======
-    <header className="fixed top-0 left-0 right-0 bg-white from-blue-500 to-teal-400 text-black p-4 shadow-md z-50">
-    <div className="container mx-auto flex justify-between items-center">
-      <h1 className="text-2xl font-bold flex items-center space-x-2">
-        <Home className="h-6 w-6" />
-        <span>Home Tax Somalia</span>
-      </h1>
-      <nav className="space-x-4 flex items-center">
-        <Link to="/" className="hover:text-gray-200 flex items-center space-x-1">
-          <Home className="h-5 w-5" />
-          <span>Home</span>
-        </Link>
-        {user ? (
-          <>
-            <Link 
-              to={getDashboardLink()} 
-              className="hover:text-gray-200 flex items-center space-x-1"
-            >
-              <Home className="h-5 w-5" />
-              <span>Dashboard</span>
-            </Link>
-            <button 
-              onClick={handleLogout} 
-              className="hover:text-gray-200 flex items-center space-x-1"
-            >
-              <LogOut className="h-5 w-5" />
-              <span>Logout</span>
-            </button>
-          </>
-        ) : (
-          <>
-            <Link to="/login" className="hover:text-gray-200 flex items-center space-x-1">
-              <LogIn className="h-5 w-5" />
-              <span>Login</span>
-            </Link>
-            <Link to="/signup" className="hover:text-gray-200 flex items-center space-x-1">
-              <UserPlus className="h-5 w-5" />
-              <span>Sign Up</span>
-            </Link>
-          </>
-        )}
-      </nav>
-    </div>
-  </header>
-  
->>>>>>> 3b9eb8c0e5efc55ad7491cb983cd70ca88183fed
   );
 }
 
