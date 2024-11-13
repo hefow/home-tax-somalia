@@ -34,7 +34,9 @@ import {
   AlertCircle,
   Plus,
   Building,
-  Trash2
+  Trash2,
+  Download,
+  Upload
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import AddPropertyForm from '../components/property/AddPropertyForm';
@@ -45,6 +47,19 @@ import UserProfileDropdown from '../components/user/UserProfileDropdown';
 import EditProfileForm from '../components/user/EditProfileForm';
 import UserSettings from '../components/user/UserSettings';
 import toast from 'react-hot-toast';
+import TaxHistory from '../components/homeowner/TaxHistory';
+import ReportIssueModal from '../components/report/ReportIssueModal';
+
+const getChangeIcon = (changeType) => {
+  switch (changeType) {
+    case 'increase':
+      return <TrendingUp className="h-4 w-4 text-green-500" />;
+    case 'decrease':
+      return <TrendingDown className="h-4 w-4 text-red-500" />;
+    default:
+      return <Minus className="h-4 w-4 text-gray-500" />;
+  }
+};
 
 function Homeowner() {
   const { user } = useAuth();
@@ -57,6 +72,11 @@ function Homeowner() {
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [homeownerData, setHomeownerData] = useState(null);
+  const [taxHistory, setTaxHistory] = useState([]);
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const count = useMotionValue(0);
   const rounded = useTransform(count, latest => Math.round(latest));
@@ -129,6 +149,12 @@ function Homeowner() {
       if (response.ok) {
         setHasHomeownerProfile(true);
         setShowHomeownerForm(false);
+        
+        await updateActivities({
+          type: 'profile',
+          activity: 'Created homeowner profile'
+        });
+        
         toast.success('Homeowner profile created successfully!');
       } else {
         const error = await response.json();
@@ -139,12 +165,86 @@ function Homeowner() {
     }
   };
 
-  const stats = [
-    { id: 1, name: 'Total Properties', value: '3', change: '+1', changeType: 'increase' },
-    { id: 2, name: 'Pending Taxes', value: '$2,450', change: '2', changeType: 'decrease' },
-    { id: 3, name: 'Total Value', value: '$650,000', change: '+12.5%', changeType: 'increase' },
-    { id: 4, name: 'Tax Rate', value: '1.2%', change: '0%', changeType: 'neutral' },
-  ];
+  const [stats, setStats] = useState([
+    { id: 1, name: 'Total Properties', value: '0', change: '0', changeType: 'neutral' },
+    { id: 2, name: 'Pending Taxes', value: '$0', change: '0', changeType: 'neutral' },
+    { id: 3, name: 'Total Value', value: '$0', change: '0', changeType: 'neutral' },
+    { id: 4, name: 'Tax Rate', value: '0%', change: '0', changeType: 'neutral' },
+  ]);
+
+  const fetchStats = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Fetch properties
+      const propertiesResponse = await fetch('http://localhost:5000/api/properties', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const properties = await propertiesResponse.json();
+
+      // Fetch tax records
+      const taxResponse = await fetch('http://localhost:5000/api/taxes/history', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const taxData = await taxResponse.json();
+
+      // Calculate stats
+      const totalProperties = properties.length;
+      const totalValue = properties.reduce((sum, prop) => sum + prop.value, 0);
+      const pendingTaxes = taxData.records
+        .filter(tax => tax.status === 'Pending')
+        .reduce((sum, tax) => sum + tax.amount, 0);
+      
+      // Calculate tax rate (total pending taxes / total property value)
+      const taxRate = totalValue > 0 ? ((pendingTaxes / totalValue) * 100).toFixed(1) : 0;
+
+      // Update stats
+      setStats([
+        {
+          id: 1,
+          name: 'Total Properties',
+          value: totalProperties.toString(),
+          change: `${totalProperties > 0 ? '+' : ''}${totalProperties}`,
+          changeType: totalProperties > 0 ? 'increase' : 'neutral'
+        },
+        {
+          id: 2,
+          name: 'Pending Taxes',
+          value: `$${pendingTaxes.toLocaleString()}`,
+          change: pendingTaxes > 0 ? pendingTaxes.toString() : '0',
+          changeType: pendingTaxes > 0 ? 'decrease' : 'neutral'
+        },
+        {
+          id: 3,
+          name: 'Total Value',
+          value: `$${totalValue.toLocaleString()}`,
+          change: `${totalValue > 0 ? '+' : ''}${((totalValue/1000).toFixed(1))}K`,
+          changeType: totalValue > 0 ? 'increase' : 'neutral'
+        },
+        {
+          id: 4,
+          name: 'Tax Rate',
+          value: `${taxRate}%`,
+          change: `${taxRate}%`,
+          changeType: taxRate > 0 ? 'increase' : 'neutral'
+        }
+      ]);
+
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      toast.error('Failed to fetch statistics');
+    }
+  };
+
+  useEffect(() => {
+    if (hasHomeownerProfile) {
+      fetchStats();
+    }
+  }, [hasHomeownerProfile]);
 
   const handleAddProperty = async (propertyData) => {
     try {
@@ -183,9 +283,13 @@ function Homeowner() {
       toast.success('Property added successfully!');
 
       fetchProperties();
+
+      await updateActivities({
+        type: 'property',
+        activity: `Added new property at ${propertyData.address}`
+      });
     } catch (error) {
-      console.error('Full error object:', error);
-      toast.error(error.message || 'Failed to add property');
+      console.error('Error:', error);
     }
   };
 
@@ -238,10 +342,7 @@ function Homeowner() {
     { 
       name: 'Pay Taxes', 
       icon: DollarSign, 
-      onClick: () => {
-        console.log('Navigating to pricing...');
-        navigate('/pricing');
-      }, 
+      onClick: () => navigate('/pricing'), 
       color: 'bg-green-500' 
     },
     { 
@@ -251,28 +352,167 @@ function Homeowner() {
       color: 'bg-purple-500' 
     },
     { 
-      name: 'Tax History', 
-      icon: BarChart2, 
-      onClick: () => navigate('/tax-history'),
-      color: 'bg-orange-500' 
+      name: 'Report Issue', 
+      icon: AlertCircle, 
+      onClick: () => setShowReportModal(true),
+      color: 'bg-red-500' 
     },
   ];
 
-  const recentActivities = [
-    { id: 1, activity: 'Tax payment processed', date: '2 hours ago', type: 'payment' },
-    { id: 2, activity: 'New property added', date: '1 day ago', type: 'property' },
-    { id: 3, activity: 'Document uploaded', date: '3 days ago', type: 'document' },
-  ];
-
-  const getChangeIcon = (changeType) => {
-    switch (changeType) {
-      case 'increase':
-        return <TrendingUp className="h-4 w-4 text-green-500" />;
-      case 'decrease':
-        return <TrendingDown className="h-4 w-4 text-red-500" />;
-      default:
-        return <Minus className="h-4 w-4 text-gray-500" />;
+  const fetchRecentActivities = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      console.log('Fetching activities with token:', token);
+      
+      const response = await fetch('http://localhost:5000/api/activities', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch activities');
+      }
+      
+      const data = await response.json();
+      console.log('Activities data:', data);
+      
+      if (data.success) {
+        setRecentActivities(data.activities || []);
+        console.log('Recent activities set:', data.activities);
+      } else {
+        throw new Error(data.message || 'Failed to fetch activities');
+      }
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+      toast.error('Failed to fetch recent activities');
     }
+  };
+
+  const refreshAllData = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch all data in parallel
+      await Promise.all([
+        fetchProperties(),
+        fetchTaxHistory(),
+        fetchRecentActivities()
+      ]);
+      setLastRefresh(new Date());
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (hasHomeownerProfile) {
+      refreshAllData();
+      
+      // Set up automatic refresh every 30 seconds
+      const refreshInterval = setInterval(() => {
+        refreshAllData();
+      }, 20000); // 20 seconds
+
+      // Clean up interval on component unmount
+      return () => clearInterval(refreshInterval);
+    }
+  }, [hasHomeownerProfile]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshAllData();
+      }
+    };
+
+    const handleFocus = () => {
+      refreshAllData();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
+  const updateActivities = async (newActivity) => {
+    try {
+      const token = localStorage.getItem('token');
+      console.log('Updating activities with:', newActivity);
+
+      const response = await fetch('http://localhost:5000/api/activities', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(newActivity)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create activity');
+      }
+
+      const data = await response.json();
+      console.log('Activity created:', data);
+
+      await fetchRecentActivities();
+    } catch (error) {
+      console.error('Error updating activities:', error);
+      toast.error('Failed to update activity');
+    }
+  };
+
+  const handlePaymentSuccess = async () => {
+    await fetchTaxHistory();
+    
+    await updateActivities({
+      type: 'payment',
+      activity: 'Completed tax payment'
+    });
+    
+    toast.success('Payment completed successfully!');
+  };
+
+  const fetchTaxHistory = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/taxes/history', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setTaxHistory(data.records);
+      }
+    } catch (error) {
+      console.error('Error fetching tax history:', error);
+      toast.error('Failed to fetch tax history');
+    }
+  };
+
+  useEffect(() => {
+    if (hasHomeownerProfile) {
+      fetchTaxHistory();
+    }
+  }, [hasHomeownerProfile]);
+
+  const formatRelativeTime = (date) => {
+    const now = new Date();
+    const activityDate = new Date(date);
+    const diffInSeconds = Math.floor((now - activityDate) / 1000);
+    
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+    return activityDate.toLocaleDateString();
   };
 
   const renderContent = () => {
@@ -629,52 +869,76 @@ function Homeowner() {
             className="bg-white rounded-xl shadow-lg overflow-hidden"
             whileHover={{ boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)" }}
           >
-            <ul className="divide-y divide-gray-200">
-              {recentActivities.map((activity, index) => (
-                <motion.li 
-                  key={activity.id}
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.9 + index * 0.1 }}
-                  className="group relative overflow-hidden hover:bg-gray-50 transition-colors"
-                >
-                  <div className="px-6 py-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className={`p-2 rounded-lg ${
-                          activity.type === 'payment' ? 'bg-green-500/10' :
-                          activity.type === 'property' ? 'bg-blue-500/10' :
-                          'bg-purple-500/10'
-                        }`}>
-                          {activity.type === 'payment' ? (
-                            <DollarSign className="h-5 w-5 text-green-500" />
-                          ) : activity.type === 'property' ? (
-                            <Home className="h-5 w-5 text-blue-500" />
-                          ) : (
-                            <FileText className="h-5 w-5 text-purple-500" />
-                          )}
+            {recentActivities.length === 0 ? (
+              <div className="p-6 text-center text-gray-500">
+                No recent activities
+              </div>
+            ) : (
+              <ul className="divide-y divide-gray-200">
+                {recentActivities.map((activity, index) => (
+                  <motion.li 
+                    key={activity._id || index}
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 0.9 + index * 0.1 }}
+                    className="group relative overflow-hidden hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="px-6 py-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className={`p-2 rounded-lg ${
+                            activity.type === 'payment' ? 'bg-green-500/10' :
+                            activity.type === 'property' ? 'bg-blue-500/10' :
+                            activity.type === 'profile' ? 'bg-yellow-500/10' :
+                            'bg-purple-500/10'
+                          }`}>
+                            {activity.type === 'payment' ? (
+                              <DollarSign className="h-5 w-5 text-green-500" />
+                            ) : activity.type === 'property' ? (
+                              <Home className="h-5 w-5 text-blue-500" />
+                            ) : activity.type === 'profile' ? (
+                              <User className="h-5 w-5 text-yellow-500" />
+                            ) : (
+                              <FileText className="h-5 w-5 text-purple-500" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {activity.activity}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {formatRelativeTime(activity.date)}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">
-                            {activity.activity}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {activity.date}
-                          </p>
-                        </div>
+                        <motion.div
+                          whileHover={{ x: 5 }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <ChevronRight className="h-5 w-5 text-gray-400" />
+                        </motion.div>
                       </div>
-                      <motion.div
-                        whileHover={{ x: 5 }}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <ChevronRight className="h-5 w-5 text-gray-400" />
-                      </motion.div>
                     </div>
-                  </div>
-                </motion.li>
-              ))}
-            </ul>
+                  </motion.li>
+                ))}
+              </ul>
+            )}
           </motion.div>
+        </motion.div>
+
+        <motion.div 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.7 }}
+          className="mt-8"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center">
+              <BarChart2 className="h-5 w-5 mr-2 text-blue-500" />
+              Tax History
+            </h2>
+          </div>
+          <TaxHistory taxRecords={taxHistory} />
         </motion.div>
       </main>
     );
@@ -756,6 +1020,19 @@ function Homeowner() {
         </div>
       </motion.div>
 
+      {isLoading && (
+        <div className="fixed top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="inline-block mr-2"
+          >
+            ⟳
+          </motion.div>
+          Updating...
+        </div>
+      )}
+
       {renderContent()}
 
       {showHomeownerForm && (
@@ -817,6 +1094,12 @@ function Homeowner() {
       {showSettings && (
         <UserSettings
           onClose={() => setShowSettings(false)}
+        />
+      )}
+
+      {showReportModal && (
+        <ReportIssueModal
+          onClose={() => setShowReportModal(false)}
         />
       )}
     </motion.div>

@@ -4,11 +4,14 @@ import { Home, DollarSign, Calendar, MapPin, FileText, Ruler, X, Edit, Trash2 } 
 import PropTypes from 'prop-types';
 import toast from 'react-hot-toast';
 import { updateProperty, deleteProperty } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 function PropertyDetail({ property, onClose, onUpdate, onDelete }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedProperty, setEditedProperty] = useState(property);
   const [isLoading, setIsLoading] = useState(false);
+
+  const token = localStorage.getItem('token');
 
   const handleUpdate = async () => {
     try {
@@ -17,6 +20,19 @@ function PropertyDetail({ property, onClose, onUpdate, onDelete }) {
       onUpdate(updatedProperty);
       setIsEditing(false);
       toast.success('Property updated successfully!');
+
+      // After successful property update, create activity
+      await fetch('http://localhost:5000/api/activities', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          type: 'property',
+          activity: `Updated property at ${property.address}`
+        })
+      });
     } catch (error) {
       console.error('Error updating property:', error);
       toast.error('Failed to update property');
@@ -69,6 +85,19 @@ function PropertyDetail({ property, onClose, onUpdate, onDelete }) {
       onDelete(property._id);
       toast.success('Property deleted successfully!');
       onClose();
+
+      // After successful property deletion, create activity
+      await fetch('http://localhost:5000/api/activities', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          type: 'property',
+          activity: `Deleted property at ${property.address}`
+        })
+      });
     } catch (error) {
       console.error('Error deleting property:', error);
       toast.error('Failed to delete property');

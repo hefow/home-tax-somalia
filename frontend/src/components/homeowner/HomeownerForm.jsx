@@ -52,6 +52,19 @@ function HomeownerForm({ onSubmit, onClose, isLoading }) {
       onSubmit(data.homeowner);
       onClose();
 
+      // After successful profile creation, create activity
+      await fetch('http://localhost:5000/api/activities', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          type: 'profile',
+          activity: `Updated profile information`
+        })
+      });
+
     } catch (error) {
       console.error('Request Error:', error);
       if (error.name === 'TypeError' && error.message === 'Failed to fetch') {

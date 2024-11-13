@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Home, LogIn, UserPlus, LogOut, Menu, X, DollarSign } from 'lucide-react';
+import { 
+  Home, 
+  LogIn, 
+  UserPlus, 
+  LogOut, 
+  Menu, 
+  X, 
+  DollarSign,
+  Info,
+  Phone,
+  Briefcase
+} from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -29,6 +40,24 @@ function Header() {
       label: 'Home', 
       icon: Home, 
       path: '/',
+      showAlways: true
+    },
+    { 
+      label: 'About Us', 
+      icon: Info, 
+      path: '/about',
+      showAlways: true
+    },
+    { 
+      label: 'Services', 
+      icon: Briefcase, 
+      path: '/services',
+      showAlways: true
+    },
+    { 
+      label: 'Contact', 
+      icon: Phone, 
+      path: '/contact',
       showAlways: true
     },
     { 

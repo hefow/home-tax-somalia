@@ -19,8 +19,47 @@ function PaymentModal({ plan, onSuccess, onClose }) {
         return;
       }
 
-      console.log('Starting payment process for plan:', plan);
+      // First get the user's properties
+      const propertiesResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/properties`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
 
+      if (!propertiesResponse.ok) {
+        throw new Error('Failed to fetch properties');
+      }
+
+      const properties = await propertiesResponse.json();
+      
+      // Use the first property ID for the tax record
+      // You might want to modify this to allow selecting a specific property
+      if (!properties || properties.length === 0) {
+        throw new Error('No properties found. Please add a property first.');
+      }
+
+      const propertyId = properties[0]._id;
+
+      // Create tax record
+      const taxResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/taxes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          propertyId: propertyId,
+          amount: plan.price,
+          status: 'Paid'
+        })
+      });
+
+      if (!taxResponse.ok) {
+        const errorData = await taxResponse.json();
+        throw new Error(errorData.message || 'Failed to create tax record');
+      }
+
+      // Then proceed with payment
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/payments/create-checkout`, {
         method: 'POST',
         headers: {
@@ -34,25 +73,32 @@ function PaymentModal({ plan, onSuccess, onClose }) {
         })
       });
 
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to create checkout session');
-      }
-
       const data = await response.json();
 
       if (data.success) {
-        // Store payment details for success page
         localStorage.setItem('paymentSuccess', JSON.stringify({
           planName: plan.name,
           amount: plan.price,
           date: new Date().toISOString()
         }));
         
-        // Close modal and navigate to success page
+        onSuccess(); // This will trigger tax history refresh
         onClose();
         navigate('/payment-success');
+
+        // After successful payment, create activity
+        await fetch(`${import.meta.env.VITE_API_URL}/api/activities`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            type: 'payment',
+            activity: `Made tax payment of $${plan.price} for ${plan.name}`
+          })
+        });
       } else if (data.url) {
-        // For external payment processing
         localStorage.setItem('pendingPayment', JSON.stringify({
           planId: plan.id,
           planName: plan.name,
@@ -63,7 +109,7 @@ function PaymentModal({ plan, onSuccess, onClose }) {
       
     } catch (error) {
       console.error('Payment Error:', error);
-      toast.error('Failed to initialize payment: ' + error.message);
+      toast.error(error.message || 'Failed to process payment');
     } finally {
       setIsLoading(false);
     }

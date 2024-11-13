@@ -22,6 +22,7 @@ export function AddPropertyForm({ onClose, onSubmit }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const token = localStorage.getItem('token');
       const propertyData = {
         address: formData.address,
         type: formData.type,
@@ -38,6 +39,19 @@ export function AddPropertyForm({ onClose, onSubmit }) {
       console.log('Submitting property data:', propertyData);
       
       await onSubmit(propertyData);
+
+      // After successful property addition, create activity
+      await fetch('http://localhost:5000/api/activities', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          type: 'property',
+          activity: `Added new property at ${propertyData.address}`
+        })
+      });
     } catch (error) {
       console.error('Error in form submission:', error);
       toast.error('Failed to add property. Please try again.');

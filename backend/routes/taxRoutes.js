@@ -1,20 +1,22 @@
 import express from 'express';
-import { 
-  createTaxRecord, 
-  getTaxRecords, 
-  getTaxRecordById, 
-  updateTaxRecord, 
-  deleteTaxRecord 
-} from '../controllers/taxController.js';
 import { protect } from '../middleware/auth.js';
+import {
+  createTaxRecord,
+  getTaxHistory,
+  getTaxRecordById,
+  updateTaxRecord,
+  deleteTaxRecord
+} from '../controllers/taxController.js';
 
 const router = express.Router();
 
-router.post('/', protect, createTaxRecord);
-router.get('/', protect, getTaxRecords);
-router.get('/:id', protect, getTaxRecordById);
-router.put('/:id', protect, updateTaxRecord);
-router.delete('/:id', protect, deleteTaxRecord);
+router.use(protect);
+
+router.get('/history', getTaxHistory);
+router.post('/', createTaxRecord);
+router.get('/:id', getTaxRecordById);
+router.put('/:id', updateTaxRecord);
+router.delete('/:id', deleteTaxRecord);
 
 export default router;
 
