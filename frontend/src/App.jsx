@@ -1,6 +1,15 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+<<<<<<< HEAD
+import AppContent from './AppContent';
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
+=======
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import HomePage from './pages/Home';
 import Login from './pages/Login';
@@ -104,11 +113,8 @@ function App() {
         </div>
       </Router>
     </AuthProvider>
+>>>>>>> 3b9eb8c0e5efc55ad7491cb983cd70ca88183fed
   );
 }
-
-AdminRoute.propTypes = {
-  children: PropTypes.node.isRequired,
-};
 
 export default App;

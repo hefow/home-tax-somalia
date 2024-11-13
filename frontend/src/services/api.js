@@ -13,8 +13,11 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const user = JSON.parse(localStorage.getItem('user'));
-    if (user && user.token) {
-      config.headers['Authorization'] = `Bearer ${user.token}`;
+    if (user?.token) {
+      config.headers.Authorization = `Bearer ${user.token}`;
+    } else {
+      // Clear any existing Authorization header if no token exists
+      delete config.headers.Authorization;
     }
     return config;
   },
@@ -23,8 +26,49 @@ api.interceptors.request.use(
   }
 );
 
+// Add a response interceptor to handle token expiration
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Clear user data if token is invalid/expired
+      localStorage.removeItem('user');
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Auth API calls
-export const login = (credentials) => api.post('/users/login', credentials);
+export const login = async (credentials) => {
+  try {
+    const response = await api.post('/users/login', credentials);
+    console.log('Raw login response:', response.data);
+    
+    // Check the structure of the response and handle it accordingly
+    const userData = {
+      token: response.data.token,
+      _id: response.data._id || response.data.user?._id,
+      email: response.data.email || response.data.user?.email,
+      ...(response.data.user || response.data)
+    };
+    
+    console.log('Processed user data:', userData);
+    
+    if (!userData.token || !userData._id) {
+      throw new Error('Invalid response format from server');
+    }
+    
+    localStorage.setItem('user', JSON.stringify(userData));
+    
+    return response;
+  } catch (error) {
+    console.error('Login error:', error);
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+    throw error;
+  }
+};
 export const signup = async (userData) => {
   try {
     const response = await api.post('/users/register', userData);
@@ -38,7 +82,14 @@ export const logout = () => {
   localStorage.removeItem('user');
 };
 export const getCurrentUser = () => {
-  return JSON.parse(localStorage.getItem('user'));
+  const userData = localStorage.getItem('user');
+  console.log('Getting current user from localStorage:', userData);
+  try {
+    return userData ? JSON.parse(userData) : null;
+  } catch (error) {
+    console.error('Error parsing user data:', error);
+    return null;
+  }
 };
 
 // User API calls

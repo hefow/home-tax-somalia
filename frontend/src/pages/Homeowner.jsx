@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { 
   Home,
@@ -33,7 +33,8 @@ import {
   Award,
   AlertCircle,
   Plus,
-  Building
+  Building,
+  Trash2
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import AddPropertyForm from '../components/property/AddPropertyForm';
@@ -145,23 +146,87 @@ function Homeowner() {
     { id: 4, name: 'Tax Rate', value: '1.2%', change: '0%', changeType: 'neutral' },
   ];
 
-  const handleAddProperty = (propertyData) => {
-    const newProperty = {
-      id: Date.now(), // Temporary ID - should come from backend
-      ...propertyData,
-      size: {
-        square: propertyData.size,
-        feet: propertyData.sizeFt,
-        total: propertyData.totalSize
+  const handleAddProperty = async (propertyData) => {
+    try {
+      const token = localStorage.getItem('token');
+      console.log('Sending property data:', propertyData);
+
+      const response = await fetch('http://localhost:5000/api/properties', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...propertyData,
+          userId: user._id
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Server error:', errorData);
+        throw new Error(errorData.message || 'Failed to add property');
       }
-    };
-    setProperties([...properties, newProperty]);
-    setShowAddProperty(false);
+
+      const newProperty = await response.json();
+      console.log('New property created:', newProperty);
+      
+      setProperties(prevProperties => {
+        const updatedProperties = [...prevProperties, newProperty];
+        console.log('Updated properties:', updatedProperties);
+        return updatedProperties;
+      });
+      
+      setSelectedProperty(newProperty);
+      setShowAddProperty(false);
+      toast.success('Property added successfully!');
+
+      fetchProperties();
+    } catch (error) {
+      console.error('Full error object:', error);
+      toast.error(error.message || 'Failed to add property');
+    }
   };
 
+  const fetchProperties = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/properties', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Fetched properties:', data);
+        setProperties(data);
+        
+        if (selectedProperty) {
+          const updatedProperty = data.find(p => p._id === selectedProperty._id);
+          if (updatedProperty) {
+            setSelectedProperty(updatedProperty);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (hasHomeownerProfile) {
+      fetchProperties();
+    }
+  }, [hasHomeownerProfile]);
+
   const handlePropertyClick = (property) => {
+    console.log('Property clicked:', property);
     setSelectedProperty(property);
   };
+
+  const navigate = useNavigate();
 
   const quickActions = [
     { 
@@ -170,9 +235,27 @@ function Homeowner() {
       onClick: () => setShowAddProperty(true), 
       color: 'bg-blue-500' 
     },
-    { name: 'Pay Taxes', icon: DollarSign, href: '/payments', color: 'bg-green-500' },
-    { name: 'View Documents', icon: FileText, href: '/documents', color: 'bg-purple-500' },
-    { name: 'Tax History', icon: BarChart2, href: '/tax-history', color: 'bg-orange-500' },
+    { 
+      name: 'Pay Taxes', 
+      icon: DollarSign, 
+      onClick: () => {
+        console.log('Navigating to pricing...');
+        navigate('/pricing');
+      }, 
+      color: 'bg-green-500' 
+    },
+    { 
+      name: 'View Documents', 
+      icon: FileText, 
+      onClick: () => navigate('/documents'),
+      color: 'bg-purple-500' 
+    },
+    { 
+      name: 'Tax History', 
+      icon: BarChart2, 
+      onClick: () => navigate('/tax-history'),
+      color: 'bg-orange-500' 
+    },
   ];
 
   const recentActivities = [
@@ -381,51 +464,27 @@ function Homeowner() {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 + index * 0.1 }}
-                whileHover={{ 
-                  scale: 1.05,
-                  transition: { duration: 0.2 }
-                }}
+                whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                {action.href ? (
-                  <Link
-                    to={action.href}
-                    className="group relative overflow-hidden rounded-xl bg-white p-6 shadow-lg hover:shadow-xl transition-all duration-300"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 transform group-hover:scale-105 transition-transform duration-300" />
-                    <div className="relative z-10">
-                      <motion.div 
-                        className={`${action.color} p-3 rounded-xl mb-4 group-hover:scale-110 transition-transform duration-300`}
-                        whileHover={{ rotate: 360 }}
-                        transition={{ duration: 0.5 }}
-                      >
-                        <action.icon className="h-6 w-6 text-white" />
-                      </motion.div>
-                      <span className="block text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                        {action.name}
-                      </span>
-                    </div>
-                  </Link>
-                ) : (
-                  <button
-                    onClick={action.onClick}
-                    className="group relative overflow-hidden w-full rounded-xl bg-white p-6 shadow-lg hover:shadow-xl transition-all duration-300"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 transform group-hover:scale-105 transition-transform duration-300" />
-                    <div className="relative z-10">
-                      <motion.div 
-                        className={`${action.color} p-3 rounded-xl mb-4 group-hover:scale-110 transition-transform duration-300`}
-                        whileHover={{ rotate: 360 }}
-                        transition={{ duration: 0.5 }}
-                      >
-                        <action.icon className="h-6 w-6 text-white" />
-                      </motion.div>
-                      <span className="block text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                        {action.name}
-                      </span>
-                    </div>
-                  </button>
-                )}
+                <button
+                  onClick={action.onClick}
+                  className="group relative overflow-hidden w-full rounded-xl bg-white p-6 shadow-lg hover:shadow-xl transition-all duration-300"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 transform group-hover:scale-105 transition-transform duration-300" />
+                  <div className="relative z-10">
+                    <motion.div 
+                      className={`${action.color} p-3 rounded-xl mb-4 group-hover:scale-110 transition-transform duration-300`}
+                      whileHover={{ rotate: 360 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <action.icon className="h-6 w-6 text-white" />
+                    </motion.div>
+                    <span className="block text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                      {action.name}
+                    </span>
+                  </div>
+                </button>
               </motion.div>
             ))}
           </div>
@@ -455,44 +514,100 @@ function Homeowner() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {properties.map((property) => (
               <motion.div
-                key={property.id}
-                whileHover={{ scale: 1.02 }}
-                className="group relative overflow-hidden bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
-                onClick={() => handlePropertyClick(property)}
+                key={property._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ 
+                  scale: 1.03,
+                  boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+                }}
+                transition={{ 
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 20
+                }}
+                className="group relative overflow-hidden bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 transform group-hover:scale-105 transition-transform duration-300" />
-                <div className="relative p-6">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transform group-hover:scale-105 transition-all duration-500" />
+                <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                  <motion.button
+                    whileHover={{ scale: 1.1, rotate: 15 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedProperty(property);
+                      setIsEditing(true);
+                    }}
+                    className="p-2 bg-white rounded-full hover:bg-blue-500 hover:text-white transition-all duration-300 shadow-lg"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.1, rotate: -15 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(property._id);
+                    }}
+                    className="p-2 bg-white rounded-full hover:bg-red-500 hover:text-white transition-all duration-300 shadow-lg"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </motion.button>
+                </div>
+                <motion.div 
+                  className="p-6 cursor-pointer relative z-10" 
+                  onClick={() => handlePropertyClick(property)}
+                >
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                    <motion.h3 
+                      whileHover={{ x: 5 }}
+                      className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors"
+                    >
                       {property.address}
-                    </h3>
+                    </motion.h3>
                     <motion.div
-                      whileHover={{ rotate: 15 }}
-                      className="p-2 rounded-lg bg-blue-500/10"
+                      whileHover={{ rotate: 360, scale: 1.2 }}
+                      transition={{ duration: 0.5 }}
+                      className="p-3 rounded-lg bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors"
                     >
                       <Home className="h-5 w-5 text-blue-500" />
                     </motion.div>
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Building className="h-4 w-4 mr-2 text-gray-400" />
-                      <span>{property.type}</span>
-                    </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <DollarSign className="h-4 w-4 mr-2 text-green-500" />
-                      <span className="font-medium">${property.value.toLocaleString()}</span>
-                    </div>
-                  </div>
-                  <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <motion.div
+                  
+                  <div className="space-y-3">
+                    <motion.div 
                       whileHover={{ x: 5 }}
-                      className="flex items-center text-blue-600"
+                      className="flex items-center text-sm text-gray-600 group-hover:text-gray-900 transition-colors"
                     >
-                      <span className="text-sm font-medium mr-1">View Details</span>
-                      <ArrowUpRight className="h-4 w-4" />
+                      <Building className="h-4 w-4 mr-2 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                      <span>{property.type}</span>
+                    </motion.div>
+                    
+                    <motion.div 
+                      whileHover={{ x: 5 }}
+                      className="flex items-center text-sm text-gray-600 group-hover:text-gray-900 transition-colors"
+                    >
+                      <DollarSign className="h-4 w-4 mr-2 text-green-500" />
+                      <span className="font-medium">
+                        ${property.value ? property.value.toLocaleString() : '0'}
+                      </span>
                     </motion.div>
                   </div>
-                </div>
+
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="mt-4 flex items-center text-blue-500 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <span>View Details</span>
+                    <motion.span
+                      animate={{ x: [0, 5, 0] }}
+                      transition={{ repeat: Infinity, duration: 1.5 }}
+                    >
+                      →
+                    </motion.span>
+                  </motion.div>
+                </motion.div>
               </motion.div>
             ))}
           </div>
@@ -563,6 +678,20 @@ function Homeowner() {
         </motion.div>
       </main>
     );
+  };
+
+  const handlePropertyUpdate = (updatedProperty) => {
+    setProperties(prevProperties => 
+      prevProperties.map(p => p._id === updatedProperty._id ? updatedProperty : p)
+    );
+    setSelectedProperty(updatedProperty);
+  };
+
+  const handlePropertyDelete = (deletedPropertyId) => {
+    setProperties(prevProperties => 
+      prevProperties.filter(p => p._id !== deletedPropertyId)
+    );
+    setSelectedProperty(null);
   };
 
   return (
@@ -637,17 +766,19 @@ function Homeowner() {
         />
       )}
 
-      {showAddProperty && hasHomeownerProfile && (
+      {showAddProperty && (
         <AddPropertyForm
           onClose={() => setShowAddProperty(false)}
           onSubmit={handleAddProperty}
         />
       )}
 
-      {selectedProperty && hasHomeownerProfile && (
+      {selectedProperty && (
         <PropertyDetail
           property={selectedProperty}
           onClose={() => setSelectedProperty(null)}
+          onUpdate={handlePropertyUpdate}
+          onDelete={handlePropertyDelete}
         />
       )}
 

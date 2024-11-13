@@ -7,6 +7,7 @@ import propertyRoutes from './routes/propertyRoutes.js';
 import taxRoutes from './routes/taxRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import cors from 'cors';
+import paymentRoutes from './routes/paymentRoutes.js';
 
 dotenv.config();
 
@@ -21,6 +22,15 @@ app.use(cors({
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Special middleware for Stripe webhook
+app.post('/api/payments/webhook', 
+  express.raw({type: 'application/json'}), 
+  paymentRoutes
+);
+
+// Regular routes
+app.use('/api/payments', paymentRoutes);
 
 // Routes
 app.use('/api/users', userRoutes);

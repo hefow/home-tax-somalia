@@ -2,22 +2,46 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { X, Home, DollarSign, Ruler, Calendar, FileText, Info } from 'lucide-react';
 import PropTypes from 'prop-types';
+import { createProperty, getCurrentUser } from '../../services/api';
+import toast from 'react-hot-toast';
 
 export function AddPropertyForm({ onClose, onSubmit }) {
   const [formData, setFormData] = React.useState({
     address: '',
     type: 'House',
-    size: 0,
+    size: {
+      square: 0,
+      feet: 0,
+      total: 0
+    },
     value: 0,
     yearBuilt: '',
-    description: '',
-    sizeFt: 0,
-    totalSize: 0,
+    description: ''
   });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    try {
+      const propertyData = {
+        address: formData.address,
+        type: formData.type,
+        size: {
+          square: Number(formData.size),
+          feet: Number(formData.sizeFt),
+          total: Number(formData.totalSize)
+        },
+        value: Number(formData.value),
+        yearBuilt: formData.yearBuilt ? Number(formData.yearBuilt) : undefined,
+        description: formData.description || undefined
+      };
+
+      console.log('Submitting property data:', propertyData);
+      
+      await onSubmit(propertyData);
+    } catch (error) {
+      console.error('Error in form submission:', error);
+      toast.error('Failed to add property. Please try again.');
+    }
   };
 
   return (
