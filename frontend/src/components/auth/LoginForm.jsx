@@ -41,9 +41,16 @@ function LoginForm({ onSuccess }) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10"
+      className="relative bg-cover bg-center py-8 px-4 shadow sm:rounded-lg sm:px-10"
+      style={{ backgroundImage: 'url(https://c8.alamy.com/comp/GX1GWK/safety-concept-login-on-digital-background-GX1GWK.jpg)' }}
     >
-      <form className="space-y-6" onSubmit={handleSubmit}>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 0.5 }}
+        transition={{ duration: 2, repeat: Infinity, repeatType: 'reverse' }}
+        className="absolute inset-0 bg-black opacity-50"
+      />
+      <form className="relative space-y-6" onSubmit={handleSubmit}>
         {error && (
           <div className="bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
             <span className="block sm:inline">{error}</span>

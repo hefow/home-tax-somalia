@@ -5,7 +5,7 @@ import Homeowner from '../models/Homeowner.js';
 // Create a new tax record
 export const createTaxRecord = async (req, res) => {
   try {
-    const { propertyId, year, amount, transactionDetails } = req.body;
+    const { propertyId, amount, status = 'Paid' } = req.body;
 
     const property = await Property.findOne({ _id: propertyId, owner: req.user._id });
     if (!property) {
@@ -14,15 +14,27 @@ export const createTaxRecord = async (req, res) => {
 
     const newTaxRecord = new TaxRecord({
       property: propertyId,
-      year,
       amount,
-      transactionDetails
+      status,
+      datePaid: status === 'Paid' ? new Date() : null,
+      year: new Date().getFullYear()
     });
 
     const savedTaxRecord = await newTaxRecord.save();
-    res.status(201).json(savedTaxRecord);
+    
+    // Populate property details before sending response
+    await savedTaxRecord.populate('property', 'address');
+
+    res.status(201).json({
+      success: true,
+      record: savedTaxRecord
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Create Tax Record Error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 };
 
@@ -111,5 +123,35 @@ export const deleteTaxRecord = async (req, res) => {
     res.status(200).json({ message: 'Tax record deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+// Add this new function to get tax history
+export const getTaxHistory = async (req, res) => {
+  try {
+    const homeowner = await Homeowner.findOne({ user: req.user._id });
+    if (!homeowner) {
+      return res.status(404).json({ message: 'Homeowner not found' });
+    }
+
+    const properties = await Property.find({ homeowner: homeowner._id });
+    const propertyIds = properties.map(property => property._id);
+
+    const taxRecords = await TaxRecord.find({ 
+      property: { $in: propertyIds } 
+    })
+    .populate('property', 'address')
+    .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      records: taxRecords
+    });
+  } catch (error) {
+    console.error('Get Tax History Error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to fetch tax history' 
+    });
   }
 };

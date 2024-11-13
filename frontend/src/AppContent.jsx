@@ -8,8 +8,13 @@ import Homeowner from './pages/Homeowner';
 import AdminDashboard from './pages/AdminDashboard';
 import Pricing from './pages/Pricing';
 import PaymentSuccess from './pages/PaymentSuccess';
+import Documents from './pages/Documents';
 import Footer from './components/common/Footer';
 import { PrivateRoute, PublicRoute } from './components/auth/ProtectedRoute';
+import About from './pages/common/About';
+import Contact from './pages/common/Contact';
+import Services from './pages/common/Services';
+import Home from './pages/Home';
 
 function AppContent() {
   return (
@@ -19,7 +24,7 @@ function AppContent() {
         <main className="flex-grow">
           <Routes>
             {/* Public routes */}
-            <Route path="/" element={<Navigate to="/login" />} />
+            <Route path="/" element={<Home />} />
             
             <Route 
               path="/login" 
@@ -66,7 +71,20 @@ function AppContent() {
               } 
             />
 
+            <Route 
+              path="/documents" 
+              element={
+                <PrivateRoute>
+                  <Documents />
+                </PrivateRoute>
+              } 
+            />
+
             <Route path="/payment-success" element={<PaymentSuccess />} />
+
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/services" element={<Services />} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

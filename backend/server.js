@@ -8,6 +8,10 @@ import taxRoutes from './routes/taxRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import cors from 'cors';
 import paymentRoutes from './routes/paymentRoutes.js';
+import activityRoutes from './routes/activityRoutes.js';
+import Activity from './models/Activity.js';
+import reportRoutes from './routes/reportRoutes.js';
+
 
 dotenv.config();
 
@@ -38,6 +42,9 @@ app.use('/api/homeowners', homeownerRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/taxes', taxRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/activities', activityRoutes);
+app.use('/api/reports', reportRoutes);
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {
