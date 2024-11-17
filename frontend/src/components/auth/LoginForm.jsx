@@ -21,14 +21,33 @@ function LoginForm({ onSuccess }) {
     setError('');
     try {
       setIsLoading(true);
+
+      // Check for existing sessions
+      const existingSession = localStorage.getItem('auth_session');
+      if (existingSession) {
+        const shouldContinue = window.confirm(
+          'There is an active session in another window. Do you want to continue and log out other sessions?'
+        );
+        if (!shouldContinue) {
+          setIsLoading(false);
+          return;
+        }
+      }
+
       const response = await login(credentials);
-      
       await authLogin(response.data);
+      
       if (onSuccess) {
         onSuccess(response.data);
       }
-      
-      navigate('/homeowner', { replace: true });
+
+      // Redirect based on role
+      if (response.data.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/homeowner');
+      }
+
     } catch (error) {
       console.error('Login failed:', error);
       setError(error.message || 'Login failed. Please check your credentials.');

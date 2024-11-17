@@ -25,6 +25,10 @@ const userSchema = new mongoose.Schema({
     enum: ['admin', 'homeowner'],
     default: 'homeowner',
   },
+  lastActivity: {
+    type: Date,
+    default: Date.now
+  },
   subscription: {
     planId: String,
     planName: String,
@@ -39,6 +43,12 @@ const userSchema = new mongoose.Schema({
 }, {
   timestamps: true,
 });
+
+// Update lastActivity when user is active
+userSchema.methods.updateActivity = function() {
+  this.lastActivity = new Date();
+  return this.save();
+};
 
 // Hash password before saving
 userSchema.pre('save', async function (next) {

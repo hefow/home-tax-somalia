@@ -17,6 +17,13 @@ import Services from './pages/common/Services';
 import Home from './pages/Home';
 
 function AppContent() {
+  // Function to determine if footer should be shown
+  const shouldShowFooter = (pathname) => {
+    return !['/admin', '/admin/users', '/admin/properties', '/admin/settings'].some(
+      path => pathname.startsWith(path)
+    );
+  };
+
   return (
     <AuthProvider>
       <div className="flex flex-col min-h-screen">
@@ -81,15 +88,13 @@ function AppContent() {
             />
 
             <Route path="/payment-success" element={<PaymentSuccess />} />
-
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/services" element={<Services />} />
-
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
-        <Footer />
+        {shouldShowFooter(window.location.pathname) && <Footer />}
       </div>
     </AuthProvider>
   );

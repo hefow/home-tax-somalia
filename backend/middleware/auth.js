@@ -14,12 +14,19 @@ export const protect = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.id);
+    const user = await User.findById(decoded.id);
 
-    if (!req.user) {
+    if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
 
+    const activeRoutes = ['/api/users/profile', '/api/properties', '/api/activities'];
+    if (activeRoutes.some(route => req.path.includes(route))) {
+      user.lastActivity = new Date();
+      await user.save();
+    }
+
+    req.user = user;
     next();
   } catch (error) {
     console.error('Auth Error:', error);

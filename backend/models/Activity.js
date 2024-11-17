@@ -6,14 +6,23 @@ const activitySchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  homeowner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
   type: {
     type: String,
-    enum: ['payment', 'property', 'profile', 'document'],
+    enum: ['payment', 'property', 'profile', 'document', 'tax', 'status'],
     required: true
   },
   activity: {
     type: String,
     required: true
+  },
+  details: String,
+  changes: {
+    before: mongoose.Schema.Types.Mixed,
+    after: mongoose.Schema.Types.Mixed
   },
   date: {
     type: Date,
@@ -23,6 +32,4 @@ const activitySchema = new mongoose.Schema({
   timestamps: true
 });
 
-const Activity = mongoose.model('Activity', activitySchema);
-
-export default Activity; 
+export default mongoose.model('Activity', activitySchema); 
