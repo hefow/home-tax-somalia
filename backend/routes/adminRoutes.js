@@ -6,7 +6,9 @@ import {
   getAllProperties,
   getDashboardStats,
   deleteUser,
-  deleteProperty
+  deleteProperty,
+  getHomeownerActivities,
+  getRevenueTrends
 } from '../controllers/adminController.js';
 
 const router = express.Router();
@@ -20,5 +22,7 @@ router.get('/properties', getAllProperties);
 router.get('/dashboard-stats', getDashboardStats);
 router.delete('/users/:id', deleteUser);
 router.delete('/properties/:id', deleteProperty);
+router.get('/homeowner-activities', getHomeownerActivities);
+router.get('/revenue-trends', protect, isAdmin, getRevenueTrends);
 
 export default router; 

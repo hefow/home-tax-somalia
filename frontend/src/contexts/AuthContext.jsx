@@ -1,77 +1,122 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PropTypes from 'prop-types';
 
-const AuthContext = createContext(null);
+const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Check for active sessions on other tabs/windows
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        const userData = JSON.parse(storedUser);
-        if (userData.token) {
-          localStorage.setItem('token', userData.token);
+    const checkOtherSessions = (e) => {
+      if (e.key === 'auth_session' && e.newValue) {
+        const newSession = JSON.parse(e.newValue);
+        if (newSession.timestamp > (user?.timestamp || 0)) {
+          setUser(newSession);
         }
-        setUser(userData);
-      } catch (error) {
-        console.error('Error parsing stored user data:', error);
-        clearAuthData();
       }
-    }
+    };
+
+    window.addEventListener('storage', checkOtherSessions);
+    return () => window.removeEventListener('storage', checkOtherSessions);
+  }, [user]);
+
+  // Initialize auth state
+  useEffect(() => {
+    const initAuth = () => {
+      const token = localStorage.getItem('token');
+      const savedUser = localStorage.getItem('user');
+      const lastActivity = localStorage.getItem('lastActivity');
+
+      if (token && savedUser) {
+        const userData = JSON.parse(savedUser);
+        const inactiveTime = Date.now() - parseInt(lastActivity || 0);
+        
+        // Auto logout after 30 minutes of inactivity
+        if (inactiveTime > 30 * 60 * 1000) {
+          logout();
+        } else {
+          setUser(userData);
+          updateLastActivity();
+        }
+      }
+      setLoading(false);
+    };
+
+    initAuth();
   }, []);
 
-    const clearAuthData = () => {
-      setUser(null);
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
-      localStorage.removeItem('hasHomeownerProfile');
-      localStorage.removeItem('pendingPayment');
-      localStorage.removeItem('paymentSuccess');
+  // Track user activity
+  const updateLastActivity = () => {
+    localStorage.setItem('lastActivity', Date.now().toString());
+  };
+
+  useEffect(() => {
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(event => {
+      window.addEventListener(event, updateLastActivity);
+    });
+
+    return () => {
+      events.forEach(event => {
+        window.removeEventListener(event, updateLastActivity);
+      });
+    };
+  }, []);
+
+  const login = async (userData) => {
+    const sessionData = {
+      ...userData,
+      timestamp: Date.now(),
+      isActive: true
     };
 
-    const login = (userData) => {
-      if (userData.token) {
-        localStorage.setItem('token', userData.token);
-      }
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-    };
+    setUser(sessionData);
+    localStorage.setItem('token', userData.token);
+    localStorage.setItem('user', JSON.stringify(sessionData));
+    localStorage.setItem('auth_session', JSON.stringify(sessionData));
+    updateLastActivity();
+  };
 
-    const logout = () => {
-      clearAuthData();
-      navigate('/login', { replace: true });
-    };
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('auth_session');
+    localStorage.removeItem('lastActivity');
+    navigate('/login');
+  };
 
-    const isAuthenticated = () => {
-      return !!user && !!localStorage.getItem('token');
-    };
+  const isAuthenticated = () => {
+    return !!user;
+  };
 
-    const value = {
-      user,
-      login,
-      logout,
-      isAuthenticated
-    };
+  const isAdmin = () => {
+    return user?.role === 'admin';
+  };
 
-    return (
-      <AuthContext.Provider value={value}>
-        {children}
-      </AuthContext.Provider>
-    );
+  const value = {
+    user,
+    login,
+    logout,
+    isAuthenticated,
+    isAdmin,
+    loading
+  };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  return useContext(AuthContext);
 }
-
-AuthProvider.propTypes = {
-  children: PropTypes.node.isRequired,
-};
