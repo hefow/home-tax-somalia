@@ -8,20 +8,26 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export const createCheckoutSession = async (req, res) => {
   try {
-    const { amount, planId, planName } = req.body;
+    const { amount, planId, planName, email } = req.body;
     
-    // Create Stripe Checkout Session
+    if (!amount || !planId || !planName || !email) {
+      return res.status(400).json({ message: 'Missing required payment details' });
+    }
+
+    // Create Stripe Checkout Session with customer email
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
+      customer_email: email,
+      billing_address_collection: 'auto',
       line_items: [
         {
           price_data: {
             currency: 'usd',
             product_data: {
               name: planName,
-              description: `Subscription for ${planName} plan`,
+              description: `Tax Payment for ${planName} Plan`,
             },
-            unit_amount: amount * 100, // Convert to cents
+            unit_amount: Math.round(amount * 100),
           },
           quantity: 1,
         },
@@ -29,19 +35,21 @@ export const createCheckoutSession = async (req, res) => {
       metadata: {
         planId,
         planName,
-        userId: req.user._id.toString()
+        userId: req.user._id.toString(),
+        userEmail: email
       },
       mode: 'payment',
-      success_url: `${process.env.FRONTEND_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${process.env.FRONTEND_URL}/payment-success`,
       cancel_url: `${process.env.FRONTEND_URL}/pricing`,
+      locale: 'auto',
     });
 
-    res.json({ sessionId: session.id, url: session.url });
+    res.json({ url: session.url });
   } catch (error) {
     console.error('Checkout Session Error:', error);
     res.status(500).json({ 
-      error: 'Failed to create checkout session',
-      details: error.message 
+      message: 'Failed to create checkout session',
+      error: error.message 
     });
   }
 };

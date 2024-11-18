@@ -4,10 +4,12 @@ import { X, CreditCard } from 'lucide-react';
 import PropTypes from 'prop-types';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 function PaymentModal({ plan, onSuccess, onClose }) {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handlePayment = async () => {
     try {
@@ -19,97 +21,65 @@ function PaymentModal({ plan, onSuccess, onClose }) {
         return;
       }
 
-      // First get the user's properties
-      const propertiesResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/properties`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!propertiesResponse.ok) {
-        throw new Error('Failed to fetch properties');
+      // Validate plan object
+      if (!plan || !plan.id || !plan.name || !plan.price) {
+        toast.error('Invalid plan details');
+        console.error('Plan validation failed:', plan);
+        return;
       }
 
-      const properties = await propertiesResponse.json();
-      
-      // Use the first property ID for the tax record
-      // You might want to modify this to allow selecting a specific property
-      if (!properties || properties.length === 0) {
-        throw new Error('No properties found. Please add a property first.');
+      // Get user email from auth context
+      if (!user || !user.email) {
+        toast.error('User information not found. Please login again.');
+        return;
       }
 
-      const propertyId = properties[0]._id;
+      // Log the request payload for debugging
+      const payload = {
+        amount: plan.price,
+        planId: plan.id,
+        planName: plan.name,
+        email: user.email
+      };
+      console.log('Payment request payload:', payload);
 
-      // Create tax record
-      const taxResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/taxes`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          propertyId: propertyId,
-          amount: plan.price,
-          status: 'Paid'
-        })
-      });
-
-      if (!taxResponse.ok) {
-        const errorData = await taxResponse.json();
-        throw new Error(errorData.message || 'Failed to create tax record');
-      }
-
-      // Then proceed with payment
+      // Create payment session with user email
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/payments/create-checkout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          amount: plan.price,
-          planId: plan.id,
-          planName: plan.name
-        })
+        body: JSON.stringify(payload)
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Server response:', errorData);
+        throw new Error(errorData.message || 'Failed to create payment session');
+      }
 
       const data = await response.json();
 
-      if (data.success) {
-        localStorage.setItem('paymentSuccess', JSON.stringify({
-          planName: plan.name,
-          amount: plan.price,
-          date: new Date().toISOString()
-        }));
-        
-        onSuccess(); // This will trigger tax history refresh
-        onClose();
-        navigate('/payment-success');
-
-        // After successful payment, create activity
-        await fetch(`${import.meta.env.VITE_API_URL}/api/activities`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            type: 'payment',
-            activity: `Made tax payment of $${plan.price} for ${plan.name}`
-          })
-        });
-      } else if (data.url) {
+      // Redirect to Stripe checkout
+      if (data.url) {
         localStorage.setItem('pendingPayment', JSON.stringify({
           planId: plan.id,
           planName: plan.name,
           amount: plan.price
         }));
         window.location.href = data.url;
+      } else {
+        throw new Error('Invalid payment session response');
       }
-      
+
     } catch (error) {
       console.error('Payment Error:', error);
-      toast.error(error.message || 'Failed to process payment');
+      if (error.message === 'Failed to fetch') {
+        toast.error('Unable to connect to server. Please check your internet connection.');
+      } else {
+        toast.error(error.message || 'Failed to process payment');
+      }
     } finally {
       setIsLoading(false);
     }
