@@ -224,4 +224,4 @@ This project is licensed under the ISC License. See the [LICENSE](LICENSE) file 
 - Open source community
 
 ---
-Made with ❤️ in Somalia
+Made with ❤️ in Somalia by [Ali Diamond](https://github.com/alidiamond1)
