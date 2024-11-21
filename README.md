@@ -189,7 +189,7 @@ Contributions are welcome! Please feel free to submit a Pull Request. You can al
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-For more information about contributing, please check our [Contributing Guidelines](https://github.com/alidiamond1/home-tax-somalia/blob/main/CONTRIBUTING.md).
+For more information about contributing, please check our [Contributing Guidelines](https://github.com/alidiamond1/home-tax-somalia/tree/contribution/alidiamond1).
 
 ## 🐛 Bug Reporting
 
