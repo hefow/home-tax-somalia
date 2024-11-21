@@ -9,6 +9,7 @@ import propertyRoutes from './routes/propertyRoutes.js';
 import activityRoutes from './routes/activityRoutes.js';
 import taxRoutes from './routes/taxRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
+import reportRoutes from './routes/reportRoutes.js';
 import mongoose from 'mongoose';
 
 dotenv.config();
@@ -76,24 +77,7 @@ app.use('/api/properties', propertyRoutes);
 app.use('/api/activities', activityRoutes);
 app.use('/api/taxes', taxRoutes);
 app.use('/api/payments', paymentRoutes);
-
-// Improve error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  
-  // Handle Stripe errors specifically
-  if (err.type === 'StripeError') {
-    return res.status(400).json({
-      message: err.message || 'Payment processing error'
-    });
-  }
-
-  // Handle other types of errors
-  res.status(err.status || 500).json({ 
-    message: err.message || 'Something went wrong!',
-    error: process.env.NODE_ENV === 'development' ? err : {}
-  });
-});
+app.use('/api/reports', reportRoutes);
 
 const PORT = process.env.PORT || 5000;
 

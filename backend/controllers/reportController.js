@@ -20,11 +20,12 @@ export const createReport = async (req, res) => {
     }
 
     const newReport = new Report({
-      user: req.user._id,
-      property: propertyId,
+      propertyId: propertyId,
       title,
       description,
-      priority
+      priority,
+      status: 'Pending',
+      submittedBy: req.user._id
     });
 
     await newReport.save();
@@ -43,10 +44,10 @@ export const createReport = async (req, res) => {
 };
 
 // Get user's reports
-export const getUserReports = async (req, res) => {
+export const getReports = async (req, res) => {
   try {
-    const reports = await Report.find({ user: req.user._id })
-      .populate('property', 'address')
+    const reports = await Report.find({ submittedBy: req.user._id })
+      .populate('propertyId', 'address')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -58,6 +59,101 @@ export const getUserReports = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch reports'
+    });
+  }
+};
+
+// Get single report
+export const getReport = async (req, res) => {
+  try {
+    const report = await Report.findOne({
+      _id: req.params.id,
+      submittedBy: req.user._id
+    }).populate('propertyId', 'address');
+
+    if (!report) {
+      return res.status(404).json({
+        success: false,
+        message: 'Report not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      report
+    });
+  } catch (error) {
+    console.error('Get Report Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch report'
+    });
+  }
+};
+
+// Update report
+export const updateReport = async (req, res) => {
+  try {
+    const report = await Report.findOne({
+      _id: req.params.id,
+      submittedBy: req.user._id
+    });
+
+    if (!report) {
+      return res.status(404).json({
+        success: false,
+        message: 'Report not found'
+      });
+    }
+
+    const { title, description, priority, status } = req.body;
+
+    report.title = title || report.title;
+    report.description = description || report.description;
+    report.priority = priority || report.priority;
+    report.status = status || report.status;
+
+    await report.save();
+
+    res.status(200).json({
+      success: true,
+      report
+    });
+  } catch (error) {
+    console.error('Update Report Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update report'
+    });
+  }
+};
+
+// Delete report
+export const deleteReport = async (req, res) => {
+  try {
+    const report = await Report.findOne({
+      _id: req.params.id,
+      submittedBy: req.user._id
+    });
+
+    if (!report) {
+      return res.status(404).json({
+        success: false,
+        message: 'Report not found'
+      });
+    }
+
+    await report.deleteOne();
+
+    res.status(200).json({
+      success: true,
+      message: 'Report deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete Report Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete report'
     });
   }
 }; 
