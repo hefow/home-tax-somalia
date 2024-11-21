@@ -181,7 +181,7 @@ Optimized viewing experience across:
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request. You can also contribute by visiting our [GitHub repository](https://github.com/alidiamond1/byteso-student-reg.git).
+Contributions are welcome! Please feel free to submit a Pull Request. You can also contribute by visiting our [GitHub repository](https://github.com/alidiamond1/home-tax-somalia.git).
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
