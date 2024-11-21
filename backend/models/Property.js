@@ -6,11 +6,6 @@ const propertySchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  homeowner: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Homeowner',
-    required: true
-  },
   address: {
     type: String,
     required: true
@@ -20,31 +15,17 @@ const propertySchema = new mongoose.Schema({
     required: true,
     enum: ['House', 'Apartment', 'Commercial', 'Land']
   },
-  // Update size fields
-  size: {
-    square: {
-      type: Number,
-      required: true
-    },
-    feet: {
-      type: Number,
-      required: true
-    },
-    total: {
-      type: Number,
-      required: true
-    }
-  },
   value: {
     type: Number,
     required: true
   },
-  yearBuilt: {
-    type: Number
+  size: {
+    square: Number,
+    feet: Number,
+    total: Number
   },
-  description: {
-    type: String
-  }
+  yearBuilt: Number,
+  description: String
 }, {
   timestamps: true
 });

@@ -20,11 +20,18 @@ function ReportIssueModal({ onClose }) {
 
   const fetchProperties = async () => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch('http://localhost:5000/api/properties', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
         }
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
       setProperties(data);
     } catch (error) {
@@ -38,40 +45,54 @@ function ReportIssueModal({ onClose }) {
     setIsLoading(true);
 
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch('http://localhost:5000/api/reports', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          propertyId: formData.propertyId,
+          title: formData.title,
+          description: formData.description,
+          priority: formData.priority,
+          status: 'Pending'
+        })
       });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        try {
+          const errorJson = JSON.parse(errorText);
+          throw new Error(errorJson.message || 'Failed to submit report');
+        } catch (e) {
+          throw new Error(`Server error: ${response.status}`);
+        }
+      }
 
       const data = await response.json();
 
-      if (data.success) {
-        toast.success('Report submitted successfully');
-        
-        // Create activity for the report
-        await fetch('http://localhost:5000/api/activities', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify({
-            type: 'document',
-            activity: `Submitted report: ${formData.title}`
-          })
-        });
+      await fetch('http://localhost:5000/api/activities', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          type: 'report',
+          activity: `Submitted report: ${formData.title}`,
+          propertyId: formData.propertyId
+        })
+      });
 
-        onClose();
-      } else {
-        throw new Error(data.message);
-      }
+      toast.success('Report submitted successfully');
+      onClose();
     } catch (error) {
       console.error('Error submitting report:', error);
-      toast.error('Failed to submit report');
+      toast.error(error.message || 'Failed to submit report');
     } finally {
       setIsLoading(false);
     }

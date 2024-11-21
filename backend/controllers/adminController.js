@@ -1,8 +1,8 @@
 import User from '../models/Users.js';
 import Property from '../models/Property.js';
 import Homeowner from '../models/Homeowner.js';
-import Activity from '../models/Activity.js';
 import TaxRecord from '../models/TaxRecord.js';
+import Activity from '../models/Activity.js';
 
 // Get all users (both admins and homeowners)
 export const getAllUsers = async (req, res) => {
@@ -47,10 +47,27 @@ export const getAllProperties = async (req, res) => {
   try {
     const properties = await Property.find()
       .populate('owner', 'username email')
-      .populate('homeowner', 'fullName phone address');
-    res.status(200).json(properties);
+      .sort({ createdAt: -1 });
+
+    if (!properties) {
+      return res.status(404).json({
+        success: false,
+        message: 'No properties found'
+      });
+    }
+
+    // Return properties array in a consistent format
+    res.status(200).json({
+      success: true,
+      properties: properties || [] // Ensure we always return an array
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Get All Properties Error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to fetch properties',
+      error: error.message 
+    });
   }
 };
 
@@ -69,7 +86,6 @@ export const getDashboardStats = async (req, res) => {
       totalHomeowners, 
       recentProperties, 
       recentUsers,
-      // Get all tax records for current month
       monthlyTaxRecords
     ] = await Promise.all([
       User.countDocuments({ role: 'homeowner' }),
@@ -77,14 +93,12 @@ export const getDashboardStats = async (req, res) => {
       Homeowner.countDocuments(),
       Property.find()
         .populate('owner', 'username email')
-        .populate('homeowner', 'fullName')
         .sort({ createdAt: -1 })
         .limit(5),
       User.find({ role: 'homeowner' })
         .select('-password')
         .sort({ createdAt: -1 })
         .limit(5),
-      // Add query for tax records
       TaxRecord.find({
         datePaid: { $gte: startOfMonth },
         status: 'Paid'
@@ -125,6 +139,7 @@ export const getDashboardStats = async (req, res) => {
   } catch (error) {
     console.error('Dashboard stats error:', error);
     res.status(500).json({ 
+      success: false,
       message: 'Failed to fetch dashboard statistics',
       error: error.message 
     });

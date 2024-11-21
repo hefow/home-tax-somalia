@@ -1,5 +1,7 @@
 import Homeowner from "../models/Homeowner.js";
 import { validateHomeownerForm } from '../utils/validationHelpers.js';
+import asyncHandler from 'express-async-handler';
+import Property from '../models/Property.js';
 
 // create homeowner
 export const createHomeowner = async (req, res) => {
@@ -113,3 +115,13 @@ export const deleteHomeowner = async (req, res) => {
       res.status(500).json({ message: error.message });
    }
 };
+
+// @desc    Get properties for logged-in homeowner
+// @route   GET /api/homeowner/properties
+// @access  Private
+export const getHomeownerProperties = asyncHandler(async (req, res) => {
+  const properties = await Property.find({ owner: req.user._id })
+    .sort({ createdAt: -1 });
+
+  res.json(properties);
+});

@@ -36,17 +36,17 @@ function PropertyManage() {
       if (!response.ok) throw new Error('Failed to fetch properties');
       
       const data = await response.json();
-      setProperties(data);
+      
+      setProperties(data.properties || []);
 
-      // Calculate property statistics
       const now = new Date();
       const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       
       setPropertyStats({
-        total: data.length,
-        occupied: data.filter(property => property.owner).length,
-        newThisMonth: data.filter(property => new Date(property.createdAt) > thisMonth).length,
-        totalValue: data.reduce((sum, property) => sum + (property.value || 0), 0)
+        total: data.properties?.length || 0,
+        occupied: data.properties?.filter(property => property.owner)?.length || 0,
+        newThisMonth: data.properties?.filter(property => new Date(property.createdAt) > thisMonth)?.length || 0,
+        totalValue: data.properties?.reduce((sum, property) => sum + (property.value || 0), 0) || 0
       });
     } catch (error) {
       toast.error(error.message);
