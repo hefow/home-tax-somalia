@@ -203,12 +203,12 @@ This project is licensed under the ISC License. See the [LICENSE](LICENSE) file 
 ## 📧 Contact & Support
 
 ### Technical Support
-- Email: support@hometaxsomalia.so
+- Email: calinur9090@gmail.com
 - Phone: +252 61 9899733
 - Hours: 24/7
 
 ### Business Inquiries
-- Email: info@hometaxsomalia.so
+- Email: calinur9090@gmail.com
 - Phone: +252 61 9899733
 - Location: Mogadishu, Somalia
 
