@@ -10,7 +10,7 @@ A modern property tax management system built for Somalia, streamlining the proc
 
 Home Tax Somalia is a comprehensive digital solution designed to modernize property tax management in Somalia. Our platform bridges the gap between property owners and tax authorities, providing a seamless, transparent, and efficient tax management experience.
 
-## ✨ Features
+### ✨ Features
 
 ### 🏢 Property Management
 - Property registration and management
