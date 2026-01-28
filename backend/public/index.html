@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Health Status | Professional Service</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @keyframes pulse-custom {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .animate-pulse-custom {
+            animation: pulse-custom 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center font-sans">
+    <div class="max-w-md w-full p-8 bg-white rounded-2xl shadow-xl border border-slate-100 transition-all hover:shadow-2xl">
+        <div class="text-center">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-6">
+                <i class="fas fa-server text-green-600 text-3xl"></i>
+            </div>
+            <h1 class="text-3xl font-extrabold text-slate-800 mb-2">System Status</h1>
+            <p class="text-slate-500 mb-8 leading-relaxed">Monitoring our backend services in real-time to ensure optimal performance.</p>
+            
+            <div class="space-y-4">
+                <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
+                    <span class="text-slate-700 font-semibold">API Endpoint</span>
+                    <span id="status-badge" class="px-4 py-1.5 bg-green-500 text-white text-xs font-bold uppercase tracking-wider rounded-full animate-pulse-custom flex items-center">
+                        <span class="w-2 h-2 bg-white rounded-full mr-2"></span>
+                        Healthy
+                    </span>
+                </div>
+                
+                <div class="text-left p-4 bg-slate-900 rounded-xl overflow-hidden">
+                    <div class="flex items-center mb-2">
+                        <div class="flex space-x-1.5 mr-3">
+                            <div class="w-2.5 h-2.5 rounded-full bg-red-400"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-green-400"></div>
+                        </div>
+                        <span class="text-slate-400 text-xs font-mono uppercase">API Response Data</span>
+                    </div>
+                    <pre id="api-data" class="text-green-400 font-mono text-sm">Loading service data...</pre>
+                </div>
+            </div>
+            
+            <div class="mt-8 pt-6 border-t border-slate-100">
+                <p class="text-slate-400 text-xs">
+                    &copy; 2026 Ali Nor Abdulle. All services operational.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function checkHealth() {
+            const display = document.getElementById('api-data');
+            const badge = document.getElementById('status-badge');
+            
+            try {
+                // Fetch from the Netlify function
+                const response = await fetch('/.netlify/functions/api');
+                const data = await response.json();
+                
+                display.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                display.textContent = JSON.stringify({
+                    status: "error",
+                    message: "Unable to connect to service",
+                    error: error.message
+                }, null, 2);
+                
+                badge.classList.remove('bg-green-500');
+                badge.classList.add('bg-red-500');
+                badge.innerHTML = '<span class="w-2 h-2 bg-white rounded-full mr-2"></span> Offline';
+            }
+        }
+
+        // Initial check
+        checkHealth();
+        // Refresh every 30 seconds
+        setInterval(checkHealth, 30000);
+    </script>
+</body>
+</html>

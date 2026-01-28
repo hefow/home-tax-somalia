@@ -3,12 +3,17 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
+    "start": "npx netlify-cli dev",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon server.js",
     "dev": "nodemon server.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "netlify",
+    "api",
+    "health-check"
+  ],
+  "author": "Ali Nor Abdulle",
   "type": "module",
   "license": "ISC",
   "description": "",
